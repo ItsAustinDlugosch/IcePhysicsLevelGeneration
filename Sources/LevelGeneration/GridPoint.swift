@@ -1,6 +1,11 @@
 public struct GridPoint { // Defines a point with an x and y value
     public let x: Int
     public let y: Int
+
+    public init(x: Int, y: Int) {
+        self.x = x
+        self.y = y
+    }
 }
 
 extension GridPoint: Equatable, Hashable {

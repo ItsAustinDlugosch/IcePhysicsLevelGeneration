@@ -1,8 +1,8 @@
 import Foundation
 
 public struct Level { // Represents a Level of our Ice Tile Physics game
-    let startingPosition: GridPoint // Where the player would start    
-    let size: GridSize // The size of the level grid
+    public let startingPosition: GridPoint // Where the player would start    
+    public let size: GridSize // The size of the level grid
     
     public var gridTiles: [[Tile]] // The tiles that make up the level grid
     public var graph = Graph() // How the tiles on the graph are connected through slides
