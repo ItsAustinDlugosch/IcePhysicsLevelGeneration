@@ -21,6 +21,6 @@ let package = Package(
         .target(
             name: "LevelGeneration",
             dependencies: [],
-            path: ".")
+            path: "Sources/LevelGeneration")
     ]
 )
