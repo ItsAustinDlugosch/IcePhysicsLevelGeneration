@@ -4,10 +4,10 @@ public struct Level { // Represents a Level of our Ice Tile Physics game
     let startingPosition: GridPoint // Where the player would start    
     let size: GridSize // The size of the level grid
     
-    var gridTiles: [[Tile]] // The tiles that make up the level grid
-    var graph = Graph() // How the tiles on the graph are connected through slides
+    public var gridTiles: [[Tile]] // The tiles that make up the level grid
+    public var graph = Graph() // How the tiles on the graph are connected through slides
 
-    init(size: GridSize, startingPosition: GridPoint) {
+    public init(size: GridSize, startingPosition: GridPoint) {
         precondition(startingPosition.x > 0 &&
                        startingPosition.x < size.width &&
                        startingPosition.y > 0 &&
@@ -47,7 +47,7 @@ public struct Level { // Represents a Level of our Ice Tile Physics game
     }
 
     // Returns the points of all tiles that have a given state
-    func tileGridPointsOfState(tileState: TileState) -> [GridPoint] {
+    public func tileGridPointsOfState(tileState: TileState) -> [GridPoint] {
         var tileGridPointsOfState = [GridPoint]()
         for tileColumn in gridTiles {
             for tile in tileColumn {
@@ -145,7 +145,7 @@ public struct Level { // Represents a Level of our Ice Tile Physics game
     }
     
     // Prints the grid
-    func printGrid() {
+    public func printGrid() {
         for y in 0 ..< size.height {
             var stateRow = [TileState]()
             for x in 0 ..< size.width {
@@ -160,7 +160,7 @@ extension Level {
     // Functions used for randomizing levels
     
     // Returns an array of active points that have an adjacent critical point
-    func activesAdjacentToCriticals() -> [GridPoint] {
+    public func activesAdjacentToCriticals() -> [GridPoint] {
         let activeTileGridPoints = tileGridPointsOfState(tileState: .active)
         let criticalTileGridPoints = tileGridPointsOfState(tileState: .critical)
 
@@ -188,7 +188,7 @@ extension Level {
     
 
     // Checks if a level grid is solvable by ensuring that every critical point has a path to the starting position    
-    func solvable() -> Bool {
+    public func solvable() -> Bool {
         for criticalTileGridPoint in tileGridPointsOfState(tileState: .critical) {
             if graph.breadthFirstSearch(origin: criticalTileGridPoint, destination: startingPosition) == nil {
                 return false

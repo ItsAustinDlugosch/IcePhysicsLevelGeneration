@@ -1,7 +1,7 @@
 public struct Graph { // Represents the relationship between slides on a level grid
-    var slides = Set<Slide>()
+    public var slides = Set<Slide>()
 
-    func breadthFirstSearch(origin: GridPoint, destination: GridPoint) -> [Slide]? {
+    public func breadthFirstSearch(origin: GridPoint, destination: GridPoint) -> [Slide]? {
         var stack: [GridPoint] = [origin]
 
         enum Visit {

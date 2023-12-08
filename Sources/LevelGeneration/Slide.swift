@@ -1,8 +1,8 @@
 public struct Slide { // Represents a "slide" that connects two critical points
-    let origin: GridPoint // Where the slide begins
-    let destination: GridPoint // Where the slide ends
+    public let origin: GridPoint // Where the slide begins
+    public let destination: GridPoint // Where the slide ends
 
-    let activatedTileGridPoints: [GridPoint] // All of the points along the slide other than the origin and destination
+    public let activatedTileGridPoints: [GridPoint] // All of the points along the slide other than the origin and destination
 }
 
 extension Slide: Hashable, Equatable {    

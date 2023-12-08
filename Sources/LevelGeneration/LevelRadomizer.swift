@@ -1,15 +1,15 @@
 public class LevelRandomizer {
-    static var shared: LevelRandomizer? = nil
+    public static var shared: LevelRandomizer? = nil
 
     private init() {
         
     }
 
-    static func initialize() {
+    public static func initialize() {
         shared = LevelRandomizer()
     }
 
-    func createComplexLevels(seed: Level) -> [Level] {
+    public func createComplexLevels(seed: Level) -> [Level] {
         var levels = [seed]        
         // Interupt slide with a wall
         repeat {

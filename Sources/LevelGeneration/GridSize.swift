@@ -1,6 +1,6 @@
 public struct GridSize { // Defines a size with a width and height
-    let width: Int
-    let height: Int
+    public let width: Int
+    public let height: Int
 
     init(width: Int, height: Int) {
         self.width = width
