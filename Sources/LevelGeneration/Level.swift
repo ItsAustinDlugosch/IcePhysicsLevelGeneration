@@ -1,4 +1,4 @@
-struct Level {
+public struct Level {
     let levelSize: LevelSize
     let startingPosition: LevelPoint
 

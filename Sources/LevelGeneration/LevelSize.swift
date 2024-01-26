@@ -1,4 +1,4 @@
-struct LevelSize { // Defines a level size with a length, width, and height
+public struct LevelSize { // Defines a level size with a length, width, and height
     let length: Int
     let width: Int
     let height: Int

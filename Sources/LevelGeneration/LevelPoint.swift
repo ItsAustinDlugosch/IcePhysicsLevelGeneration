@@ -1,4 +1,4 @@
-struct LevelPoint { // Defines a point with an x and y value
+public struct LevelPoint { // Defines a point with an x and y value
     let x: Int
     let y: Int
     let cubeFace: CubeFace
@@ -18,7 +18,7 @@ extension LevelPoint: Equatable, Hashable {
           lhs.cubeFace == rhs.cubeFace
     }
 
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(x)
         hasher.combine(y)
         hasher.combine(cubeFace)

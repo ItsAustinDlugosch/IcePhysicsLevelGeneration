@@ -1,4 +1,4 @@
-struct Slide { // Represents a "slide" that connects two critical points
+public struct Slide { // Represents a "slide" that connects two critical points
     let origin: LevelPoint // Where the slide begins
     let destination: LevelPoint // Where the slide ends
     
@@ -25,7 +25,7 @@ extension Slide: Hashable, Equatable {
           lhs.activatedTilePoints == rhs.activatedTilePoints       
     }
 
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(origin)
         hasher.combine(destination)
         hasher.combine(activatedTilePoints)

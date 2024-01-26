@@ -1,6 +1,6 @@
 import Foundation
 
-struct FaceLevel { // Represents one side of a level within our game
+public struct FaceLevel { // Represents one side of a level within our game
     let faceSize: FaceSize
     let cubeFace: CubeFace    
 

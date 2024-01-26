@@ -1,3 +1,3 @@
-enum Direction: Hashable {
+public enum Direction: Hashable {
     case up, down, left, right
 }

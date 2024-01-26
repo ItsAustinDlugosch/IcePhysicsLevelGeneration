@@ -1,4 +1,4 @@
-struct FaceSize {
+public struct FaceSize {
     let maxX: Int
     let maxY: Int
 

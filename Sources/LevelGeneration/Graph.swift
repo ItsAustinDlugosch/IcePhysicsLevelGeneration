@@ -1,4 +1,4 @@
-struct Graph { // Represents the relationship between slides on a level grid
+public struct Graph { // Represents the relationship between slides on a level grid
     private var slides = Set<Slide>()
 
     mutating func insertSlide(_ slide: Slide) {

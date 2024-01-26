@@ -1,4 +1,4 @@
-enum CubeEdgeTransformation {
+public enum CubeEdgeTransformation {
     case maxX
     case maxY
     case minX

@@ -1,4 +1,4 @@
-class LevelRandomizer {
+public class LevelRandomizer {
     static var shared: LevelRandomizer? = nil
     static let randomizerIterationCap: Int = 10
 
