@@ -1,11 +1,11 @@
-public struct Tile { // Represents a tile on the level grid
-    public let point: GridPoint // Each tile has a point, x values increase as tiles continue to the right, y values increase as tile continue down
-    public var tileState: TileState // The state of each tile
+struct Tile { // Represents a tile on the level grid
+    let point: LevelPoint // Each tile has a point
+    var tileState: TileState // The state of each tile
 }
 
 extension Tile: Equatable, Hashable {
 
-    public func hash(into hasher: inout Hasher) {
+    func hash(into hasher: inout Hasher) {
         hasher.combine(point)
         hasher.combine(tileState)
     }

@@ -1,199 +1,182 @@
-import Foundation
+struct Level {
+    let levelSize: LevelSize
+    let startingPosition: LevelPoint
 
-public struct Level { // Represents a Level of our Ice Tile Physics game
-    public let startingPosition: GridPoint // Where the player would start    
-    public let size: GridSize // The size of the level grid
-    
-    public var gridTiles: [[Tile]] // The tiles that make up the level grid
-    public var graph = Graph() // How the tiles on the graph are connected through slides
-
-    public init(size: GridSize, startingPosition: GridPoint) {
-        precondition(startingPosition.x > 0 &&
-                       startingPosition.x < size.width &&
-                       startingPosition.y > 0 &&
-                       startingPosition.y < size.height,
-                     "Starting position must be with the bounds of the grid.")        
-        
-        self.size = size
+    var faceLevels: [FaceLevel]
+    var levelGraph = Graph()
+    init(levelSize: LevelSize, startingPosition: LevelPoint) {
+        self.levelSize = levelSize
         self.startingPosition = startingPosition
-
-        // Create the grid tiles and set their state as inactive by default
-        var gridTiles = [[Tile]]()
-        for x in 0 ..< size.width {
-            var tileColumn = [Tile]()
-            for y in 0 ..< size.height {
-                tileColumn.append(Tile(point: GridPoint(x: x, y: y), tileState: .inactive))
-            }
-            gridTiles.append(tileColumn)
+        
+        // Create the face levels
+        var faceLevels = [FaceLevel]()
+        for cubeFace in [CubeFace]([.back, .left, .top, .right, .front, .bottom]) {
+            faceLevels.append(FaceLevel(faceSize: levelSize.faceSize(cubeFace: cubeFace), cubeFace: cubeFace))
         }
-        self.gridTiles = gridTiles
-        setBoundaryWalls()
-        setTileState(point: startingPosition, tileState: .critical)
-        createCriticalTiles()        
+        self.faceLevels = faceLevels
+        setTileState(levelPoint: startingPosition, tileState: .critical)
+        initializeCriticalTiles()
     }
 
-    // Sets boundary walls on the grid, all perimeter tile states are set to wall
-    mutating func setBoundaryWalls() {
-        for boundY in [0, size.height - 1] {
-            for x in 0 ..< size.width {
-                gridTiles[x][boundY].tileState = .wall
-            }
-        }
-        for boundX in [0, size.width - 1] {
-            for y in 0 ..< size.height {
-                gridTiles[boundX][y].tileState = .wall
-            }
-        }        
+    // Initializing function that is used to set the state of one or multiple tiles
+    mutating func setTileState(levelPoint: LevelPoint, tileState: TileState) {
+        faceLevels[levelPoint.cubeFace.rawValue].setTileState(levelPoint: levelPoint, tileState: tileState)
+    }
+    mutating func setTileState(levelPoints: [LevelPoint], tileState: TileState) {
+        levelPoints.forEach { setTileState(levelPoint: $0, tileState: tileState) }
     }
 
-    // Returns the points of all tiles that have a given state
-    public func tileGridPointsOfState(tileState: TileState) -> [GridPoint] {
-        var tileGridPointsOfState = [GridPoint]()
-        for tileColumn in gridTiles {
-            for tile in tileColumn {
-                if tile.tileState == tileState {
-                    tileGridPointsOfState.append(tile.point)
+    // Initializing functiona that is used to change the state of one or multiple tiles if they match a current tile state
+    mutating func changeTileStateIfCurrent(levelPoint: LevelPoint, current currentTileState: TileState, new newTileState: TileState) {
+        faceLevels[levelPoint.cubeFace.rawValue].changeTileStateIfCurrent(levelPoint: levelPoint, current: currentTileState, new: newTileState)        
+    }
+    mutating func changeTileStateIfCurrent(levelPoints: [LevelPoint], current currentTileState: TileState, new newTileState: TileState) {
+        levelPoints.forEach { changeTileStateIfCurrent(levelPoint: $0, current: currentTileState, new: newTileState) }   
+    }
+
+    func tilePointsOfState(tileState: TileState) -> [LevelPoint] {
+        return faceLevels.flatMap { $0.tilePointsOfState(tileState: tileState) }
+    }
+
+    let crossCubeEdgeMap: [CubeEdge:(CubeFace, Direction, [CubeEdgeTransformation])] = [
+      CubeEdge(.back, .up):(.bottom, .up, [.maxY]),
+      CubeEdge(.back, .right):(.right, .down, [.swap, .invertDeltaY, .invertDeltaX]),
+      CubeEdge(.back, .down):(.top, .down, [.minY]),
+      CubeEdge(.back, .left):(.left, .down, [.swap]),
+      CubeEdge(.left, .up):(.back, .right, [.swap]),
+      CubeEdge(.left, .right):(.top, .right, [.minX]),
+      CubeEdge(.left, .down):(.front, .right, [.swap, .minX]),
+      CubeEdge(.left, .left):(.bottom, .right, [.invertDeltaY, .minX]),
+      CubeEdge(.top, .up):(.back, .up, [.maxY]),
+      CubeEdge(.top, .right):(.right, .right, [.minX]),
+      CubeEdge(.top, .down):(.front, .down, [.minY]),
+      CubeEdge(.top, .left):(.left, .left, [.maxX]),
+      CubeEdge(.right, .up):(.back, .left, [.swap, .maxX]),
+      CubeEdge(.right, .right):(.bottom, .left, [.invertDeltaY, .maxX]),
+      CubeEdge(.right, .down):(.front, .left, [.swap]),
+      CubeEdge(.right, .left):(.top, .left, [.maxX]),
+      CubeEdge(.front, .up):(.top, .up, [.maxY]),
+      CubeEdge(.front, .right):(.right, .up, [.swap]),
+      CubeEdge(.front, .down):(.bottom, .down, [.minY]),
+      CubeEdge(.front, .left):(.left, .up, [.swap, .invertDeltaY, .invertDeltaX]),
+      CubeEdge(.bottom, .up):(.front, .up, [.maxY]),
+      CubeEdge(.bottom, .right):(.right, .left, [.invertDeltaY, .maxX]),
+      CubeEdge(.bottom, .down):(.back, .down, [.minY]),
+      CubeEdge(.bottom, .left):(.left, .right, [.invertDeltaY, .minX]),
+    ]
+
+    func adjacentPoint(from origin: LevelPoint, direction: Direction) -> (adjacentPoint: LevelPoint, direction: Direction) {        
+        func handleEdge() -> (LevelPoint, Direction) {
+            guard let (cubeFace, direction, transformations) = crossCubeEdgeMap[CubeEdge(origin.cubeFace, direction)] else {
+                fatalError("Unexpected edge transformation.")
+            }
+            return (transformations.reduce(origin, { (point: LevelPoint, transformation: CubeEdgeTransformation) -> LevelPoint in
+                                                           return transformation.transform(levelSize: levelSize, newCubeFace: cubeFace, point: point)
+                                                        }), direction)
+        }
+
+        let faceSize = levelSize.faceSize(cubeFace: origin.cubeFace)
+        switch direction {
+        case .up:
+            if origin.y - 1 < 0 { // Transform
+                return handleEdge()
+            }
+            return (LevelPoint(x: origin.x, y: origin.y - 1, cubeFace: origin.cubeFace), direction)
+        case .down:
+            if origin.y + 1 >= faceSize.maxY { // Another face
+                return handleEdge()
+            }
+            return (LevelPoint(x: origin.x, y: origin.y + 1, cubeFace: origin.cubeFace), direction)
+        case .left:
+            if origin.x - 1 < 0 { // Another face
+                return handleEdge()
+            }
+            return (LevelPoint(x: origin.x - 1, y: origin.y, cubeFace: origin.cubeFace), direction)
+        case .right:
+            if origin.x + 1 >= faceSize.maxX {
+                return handleEdge()
+            }
+            return (LevelPoint(x: origin.x + 1, y: origin.y, cubeFace: origin.cubeFace), direction)
+        }
+    }
+
+    func adjacentPoints(levelPoint: LevelPoint) -> [(adjacentPoint: LevelPoint, direction: Direction)] {
+        return [Direction]([.up, .down, .left, .right]).map { adjacentPoint(from: levelPoint, direction: $0) }
+    }
+
+    func slideCriticalTile(origin: LevelPoint, direction: Direction) -> Slide {
+        let originFaceLevel = faceLevels[origin.cubeFace.rawValue]
+        precondition(originFaceLevel.tiles[origin.x][origin.y].tileState == .critical,
+                     "Tile state must be critical in order to slide.")
+        var previous = origin
+        var (destination, direction) = adjacentPoint(from: previous, direction: direction)
+        var activatedTilePoints = [LevelPoint]()
+        while faceLevels[destination.cubeFace.rawValue].tiles[destination.x][destination.y].tileState != .wall {
+            previous = destination
+            activatedTilePoints.append(previous)
+            (destination, direction) = adjacentPoint(from: destination, direction: direction)
+        }
+        return Slide(origin: origin, destination: previous, activatedTilePoints: activatedTilePoints)
+    }
+
+    mutating func initializeCriticalTiles(criticalTilePoints: [LevelPoint]? = nil) {
+        let allCriticalTiles = tilePointsOfState(tileState: .critical)
+        var foundCriticalTilePoints = [LevelPoint]()
+        for criticalTilePoint in criticalTilePoints ?? allCriticalTiles {            
+            for direction in [Direction]([.up, .down, .left, .right]) {
+                let slide = slideCriticalTile(origin: criticalTilePoint, direction: direction)                
+                if slide.origin != slide.destination {
+                    levelGraph.insertSlide(slide)
+                    if !allCriticalTiles.contains(slide.destination) {
+                        setTileState(levelPoint: slide.destination, tileState: .critical)
+                        changeTileStateIfCurrent(levelPoints: slide.activatedTilePoints, current: .inactive, new: .active)
+                        foundCriticalTilePoints.append(slide.destination)
+                    }
                 }
             }
         }
-        return tileGridPointsOfState
-    }
-
-
-    // Returns a slide in a given direction from a given point
-    func slideTile(point: GridPoint, direction: Direction) -> Slide {
-        precondition(gridTiles[point.x][point.y].tileState == .critical, "A tile must be critical in order to slide.")
-        var activatedTileGridPoints = [GridPoint]()
-        let destination: GridPoint
-        switch direction {
-        case .down:
-            var incrementY = 1
-            while gridTiles[point.x][point.y + incrementY].tileState != .wall {                
-                activatedTileGridPoints.append(GridPoint(x: point.x, y: point.y + incrementY))
-                incrementY += 1
-            }            
-            destination = GridPoint(x: point.x, y: point.y + incrementY - 1)
-        case .up:
-            var decrementY = 1
-            while gridTiles[point.x][point.y - decrementY].tileState != .wall {
-                activatedTileGridPoints.append(GridPoint(x: point.x, y: point.y - decrementY))
-                decrementY += 1
-            }
-            destination = GridPoint(x: point.x, y: point.y - decrementY + 1)
-        case .right:
-            var incrementX = 1
-            while gridTiles[point.x + incrementX][point.y].tileState != .wall {
-                activatedTileGridPoints.append(GridPoint(x: point.x + incrementX, y: point.y))
-                incrementX += 1
-            }
-            destination = GridPoint(x: point.x + incrementX - 1, y: point.y)
-        case .left:
-            var decrementX = 1
-            while gridTiles[point.x - decrementX][point.y].tileState != .wall {
-                activatedTileGridPoints.append(GridPoint(x: point.x - decrementX, y: point.y))
-                decrementX += 1
-            }
-            destination = GridPoint(x: point.x - decrementX + 1, y: point.y)
-        }
-        if activatedTileGridPoints.count > 0 {
-            activatedTileGridPoints.removeLast()
-        }
-        return Slide(origin: point, destination: destination, activatedTileGridPoints: activatedTileGridPoints)
-    }
-
-    // Returns an array of Slides of all four directions from a given point
-    func slideAllDirections(point: GridPoint) -> [Slide] {
-        return [slideTile(point: point, direction: .up), slideTile(point: point, direction: .down),
-                slideTile(point: point, direction: .right), slideTile(point: point, direction: .left)]
-    }
-
-    // Sets a given point's tile state
-    mutating func setTileState(point: GridPoint, tileState: TileState) {
-        gridTiles[point.x][point.y].tileState = tileState
-    }
-    // Sets multiple given points' tile states
-    mutating func setTileState(points: [GridPoint], tileState: TileState) {
-        points.forEach { setTileState(point: $0, tileState: tileState) }
-    }
-    // Changes a given point's tile state if it has the previous tile state
-    mutating func changeTileState(point: GridPoint, previousTileState: TileState, newTileState: TileState) {
-        if gridTiles[point.x][point.y].tileState == previousTileState {
-            setTileState(point: point, tileState: newTileState)
+        if foundCriticalTilePoints.count > 0 {
+            initializeCriticalTiles(criticalTilePoints: foundCriticalTilePoints)
         }
     }
-    // Changes multiple given points' tile states if they have the previous tile state
-    mutating func changeTileState(points: [GridPoint], previousTileState: TileState, newTileState: TileState) {
-        points.forEach { changeTileState(point: $0, previousTileState: previousTileState, newTileState: newTileState) }
-    }
 
-    // Recursively "sets" the critical tile states by sliding from the starting position. Active tiles along a slide are "changed"
-    mutating func createCriticalTiles(criticalTileGridPoints: [GridPoint]? = nil) { // Default uses all curent critical tiles
-        let allCriticalTileGridPoints = tileGridPointsOfState(tileState: .critical)
-        for criticalTileGridPoint in criticalTileGridPoints ?? allCriticalTileGridPoints {
-            // For each critical tile slide in all directions and change states accordingly
-            let criticalSlides = slideAllDirections(point: criticalTileGridPoint).filter { $0.origin != $0.destination }
-            criticalSlides.forEach { graph.slides.insert($0) }
-            let activatedTileGridPoints: [GridPoint] = Array(criticalSlides.map { $0.activatedTileGridPoints }.joined())
-            changeTileState(points: activatedTileGridPoints, previousTileState: .inactive, newTileState: .active)
-            let newDestinations = criticalSlides.map { $0.destination }.filter { !allCriticalTileGridPoints.contains($0) }
-            setTileState(points: newDestinations, tileState: .critical)
-            // If there are new critical tiles found, recursively call this function until all critical tiles are found
-            if newDestinations.count > 0 {
-                createCriticalTiles(criticalTileGridPoints: newDestinations)
-            }                             
-        }            
-    }
-    
-    // Prints the grid
-    public func printGrid() {
-        for y in 0 ..< size.height {
-            var stateRow = [TileState]()
-            for x in 0 ..< size.width {
-                stateRow.append(gridTiles[x][y].tileState)
-            }
-            print(stateRow)
-        }
-    }
-}
-
-extension Level {
-    // Functions used for randomizing levels
-    
-    // Returns an array of active points that have an adjacent critical point
-    public func activesAdjacentToCriticals() -> [GridPoint] {
-        let activeTileGridPoints = tileGridPointsOfState(tileState: .active)
-        let criticalTileGridPoints = tileGridPointsOfState(tileState: .critical)
-
-        func adjacentCritical(point: GridPoint) -> Bool {
-            for criticalTileGridPoint in criticalTileGridPoints {
-                // If x value is +- 1 and y value is same or y value is +- 1 and x value is same
-                if abs(criticalTileGridPoint.x - point.x) == 1 && criticalTileGridPoint.y == point.y ||
-                     abs(criticalTileGridPoint.y - point.y) == 1 && criticalTileGridPoint.x == point.x { 
+    func activeTilePointsAdjacentToCriticals() -> [LevelPoint] {
+        let activeTilePoints = tilePointsOfState(tileState: .active)
+        return activeTilePoints.filter {
+            for direction in [Direction]([.up, .down, .left, .right]) {
+                let adjacentPoint = adjacentPoint(from: $0, direction: direction).adjacentPoint
+                if faceLevels[adjacentPoint.cubeFace.rawValue].tiles[adjacentPoint.x][adjacentPoint.y].tileState == .critical {
                     return true
                 }
             }
             return false
         }
-        return activeTileGridPoints.filter { adjacentCritical(point: $0) }
     }
 
-    // Resets the level to be revalidated
+        // Resets the level to be revalidated
     mutating func resetLevel() {
-        tileGridPointsOfState(tileState: .active).forEach { gridTiles[$0.x][$0.y].tileState = .inactive }
-        tileGridPointsOfState(tileState: .critical).forEach { gridTiles[$0.x][$0.y].tileState = .inactive }
-        graph.slides = []
-        setTileState(point: startingPosition, tileState: .critical)
-        createCriticalTiles()
+        tilePointsOfState(tileState: .active).forEach { setTileState(levelPoint: $0, tileState: .inactive) }
+        tilePointsOfState(tileState: .critical).forEach { setTileState(levelPoint: $0, tileState: .inactive) }
+        levelGraph.clearGraph()
+        setTileState(levelPoint: startingPosition, tileState: .critical)
+        initializeCriticalTiles()
     }
     
 
     // Checks if a level grid is solvable by ensuring that every critical point has a path to the starting position    
-    public func solvable() -> Bool {
-        for criticalTileGridPoint in tileGridPointsOfState(tileState: .critical) {
-            if graph.breadthFirstSearch(origin: criticalTileGridPoint, destination: startingPosition) == nil {
+    func solvable() -> Bool {
+        for criticalTileGridPoint in tilePointsOfState(tileState: .critical) {
+            if levelGraph.breadthFirstSearch(origin: criticalTileGridPoint, destination: startingPosition) == nil {
                 return false
             }
         }
         return true
+    }
+
+    func printTileStates() {
+        for cubeFace in [CubeFace]([.back, .left, .top, .right, .front, .bottom]) {
+            print(cubeFace)
+            faceLevels[cubeFace.rawValue].printTileStates()
+        }              
     }
 }
