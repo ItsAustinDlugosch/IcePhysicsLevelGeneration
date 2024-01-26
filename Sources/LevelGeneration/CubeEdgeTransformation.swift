@@ -7,7 +7,7 @@ public enum CubeEdgeTransformation {
     case invertDeltaY
     case invertDeltaX
 
-    func transform(levelSize: LevelSize, newCubeFace: CubeFace, point: LevelPoint) -> LevelPoint {
+    public func transform(levelSize: LevelSize, newCubeFace: CubeFace, point: LevelPoint) -> LevelPoint {
         let newFaceSize = levelSize.faceSize(cubeFace: newCubeFace)
         switch self {
         case .maxX:                

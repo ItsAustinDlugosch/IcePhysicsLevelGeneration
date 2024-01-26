@@ -5,7 +5,7 @@ public struct FaceLevel { // Represents one side of a level within our game
     let cubeFace: CubeFace    
 
     public var tiles: [[Tile]]
-    init(faceSize: FaceSize, cubeFace: CubeFace) {
+    public init(faceSize: FaceSize, cubeFace: CubeFace) {
         self.faceSize = faceSize
         self.cubeFace = cubeFace
 
@@ -31,25 +31,25 @@ public struct FaceLevel { // Represents one side of a level within our game
     }
 
     // Initializing function that is used to set the state of one or multiple tiles
-    mutating func setTileState(levelPoint: LevelPoint, tileState: TileState) {
+    public mutating func setTileState(levelPoint: LevelPoint, tileState: TileState) {
         tiles[levelPoint.x][levelPoint.y].tileState = tileState
     }
-    mutating func setTileState(levelPoints: [LevelPoint], tileState: TileState) {
+    public mutating func setTileState(levelPoints: [LevelPoint], tileState: TileState) {
         levelPoints.forEach { setTileState(levelPoint: $0, tileState: tileState) }
     }
     
     // Initializing function that is used to change the state of one or multiple tiles if they match a current tile state
-    mutating func changeTileStateIfCurrent(levelPoint: LevelPoint, current currentTileState: TileState, new newTileState: TileState) {
+    public mutating func changeTileStateIfCurrent(levelPoint: LevelPoint, current currentTileState: TileState, new newTileState: TileState) {
         if tiles[levelPoint.x][levelPoint.y].tileState == currentTileState {
             tiles[levelPoint.x][levelPoint.y].tileState = newTileState
         }
     }
-    mutating func changeTileStateIfCurrent(levelPoints: [LevelPoint], current currentTileState: TileState, new newTileState: TileState) {
+    public mutating func changeTileStateIfCurrent(levelPoints: [LevelPoint], current currentTileState: TileState, new newTileState: TileState) {
         levelPoints.forEach { changeTileStateIfCurrent(levelPoint: $0, current: currentTileState, new: newTileState) }
     }
 
     // Returns the points of tiles along the border of a face
-    func borderPoints() -> [LevelPoint] {
+    public func borderPoints() -> [LevelPoint] {
         var borderPoints = [LevelPoint]()
         for tileColumn in tiles {
             for tile in tileColumn {
@@ -63,7 +63,7 @@ public struct FaceLevel { // Represents one side of a level within our game
     }
     
     // Returns the points of all tiles with a tile state
-    func tilePointsOfState(tileState: TileState) -> [LevelPoint] {
+    public func tilePointsOfState(tileState: TileState) -> [LevelPoint] {
         var tilePointsOfState = [LevelPoint]()
         for tileColumn in tiles {
             for tile in tileColumn {
@@ -76,7 +76,7 @@ public struct FaceLevel { // Represents one side of a level within our game
     }
 
     // Prints the grid
-    func printTileStates() {
+    public func printTileStates() {
         for y in 0 ..< faceSize.maxY {
             var stateRow = [TileState]()
             for x in 0 ..< faceSize.maxX {

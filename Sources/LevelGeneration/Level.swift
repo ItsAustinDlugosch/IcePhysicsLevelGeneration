@@ -4,7 +4,7 @@ public struct Level {
 
     var faceLevels: [FaceLevel]
     var levelGraph = Graph()
-    init(levelSize: LevelSize, startingPosition: LevelPoint) {
+    public init(levelSize: LevelSize, startingPosition: LevelPoint) {
         self.levelSize = levelSize
         self.startingPosition = startingPosition
         
@@ -19,18 +19,18 @@ public struct Level {
     }
 
     // Initializing function that is used to set the state of one or multiple tiles
-    mutating func setTileState(levelPoint: LevelPoint, tileState: TileState) {
+    public mutating func setTileState(levelPoint: LevelPoint, tileState: TileState) {
         faceLevels[levelPoint.cubeFace.rawValue].setTileState(levelPoint: levelPoint, tileState: tileState)
     }
-    mutating func setTileState(levelPoints: [LevelPoint], tileState: TileState) {
+    public mutating func setTileState(levelPoints: [LevelPoint], tileState: TileState) {
         levelPoints.forEach { setTileState(levelPoint: $0, tileState: tileState) }
     }
 
     // Initializing functiona that is used to change the state of one or multiple tiles if they match a current tile state
-    mutating func changeTileStateIfCurrent(levelPoint: LevelPoint, current currentTileState: TileState, new newTileState: TileState) {
+    public mutating func changeTileStateIfCurrent(levelPoint: LevelPoint, current currentTileState: TileState, new newTileState: TileState) {
         faceLevels[levelPoint.cubeFace.rawValue].changeTileStateIfCurrent(levelPoint: levelPoint, current: currentTileState, new: newTileState)        
     }
-    mutating func changeTileStateIfCurrent(levelPoints: [LevelPoint], current currentTileState: TileState, new newTileState: TileState) {
+    public mutating func changeTileStateIfCurrent(levelPoints: [LevelPoint], current currentTileState: TileState, new newTileState: TileState) {
         levelPoints.forEach { changeTileStateIfCurrent(levelPoint: $0, current: currentTileState, new: newTileState) }   
     }
 
@@ -65,7 +65,7 @@ public struct Level {
       CubeEdge(.bottom, .left):(.left, .right, [.invertDeltaY, .minX]),
     ]
 
-    func adjacentPoint(from origin: LevelPoint, direction: Direction) -> (adjacentPoint: LevelPoint, direction: Direction) {        
+    public func adjacentPoint(from origin: LevelPoint, direction: Direction) -> (adjacentPoint: LevelPoint, direction: Direction) {        
         func handleEdge() -> (LevelPoint, Direction) {
             guard let (cubeFace, direction, transformations) = crossCubeEdgeMap[CubeEdge(origin.cubeFace, direction)] else {
                 fatalError("Unexpected edge transformation.")
@@ -100,11 +100,11 @@ public struct Level {
         }
     }
 
-    func adjacentPoints(levelPoint: LevelPoint) -> [(adjacentPoint: LevelPoint, direction: Direction)] {
+    public func adjacentPoints(levelPoint: LevelPoint) -> [(adjacentPoint: LevelPoint, direction: Direction)] {
         return [Direction]([.up, .down, .left, .right]).map { adjacentPoint(from: levelPoint, direction: $0) }
     }
 
-    func slideCriticalTile(origin: LevelPoint, direction: Direction) -> Slide {
+    public func slideCriticalTile(origin: LevelPoint, direction: Direction) -> Slide {
         let originFaceLevel = faceLevels[origin.cubeFace.rawValue]
         precondition(originFaceLevel.tiles[origin.x][origin.y].tileState == .critical,
                      "Tile state must be critical in order to slide.")
@@ -140,7 +140,7 @@ public struct Level {
         }
     }
 
-    func activeTilePointsAdjacentToCriticals() -> [LevelPoint] {
+    public func activeTilePointsAdjacentToCriticals() -> [LevelPoint] {
         let activeTilePoints = tilePointsOfState(tileState: .active)
         return activeTilePoints.filter {
             for direction in [Direction]([.up, .down, .left, .right]) {
@@ -154,7 +154,7 @@ public struct Level {
     }
 
         // Resets the level to be revalidated
-    mutating func resetLevel() {
+    public mutating func resetLevel() {
         tilePointsOfState(tileState: .active).forEach { setTileState(levelPoint: $0, tileState: .inactive) }
         tilePointsOfState(tileState: .critical).forEach { setTileState(levelPoint: $0, tileState: .inactive) }
         levelGraph.clearGraph()
@@ -164,7 +164,7 @@ public struct Level {
     
 
     // Checks if a level grid is solvable by ensuring that every critical point has a path to the starting position    
-    func solvable() -> Bool {
+    public func solvable() -> Bool {
         for criticalTileGridPoint in tilePointsOfState(tileState: .critical) {
             if levelGraph.breadthFirstSearch(origin: criticalTileGridPoint, destination: startingPosition) == nil {
                 return false
@@ -173,7 +173,7 @@ public struct Level {
         return true
     }
 
-    func printTileStates() {
+    public func printTileStates() {
         for cubeFace in [CubeFace]([.back, .left, .top, .right, .front, .bottom]) {
             print(cubeFace)
             faceLevels[cubeFace.rawValue].printTileStates()

@@ -3,19 +3,19 @@ public struct LevelSize { // Defines a level size with a length, width, and heig
     let width: Int
     let height: Int
 
-    init(length:Int, width: Int, height: Int) {
+    public init(length:Int, width: Int, height: Int) {
         self.length = length
         self.width = width
         self.height = height
     }
 
-    init(edgeLength: Int) {
+    public init(edgeLength: Int) {
         self.length = edgeLength
         self.width = edgeLength
         self.height = edgeLength
     }
 
-    func faceSize(cubeFace: CubeFace) -> FaceSize {
+    public func faceSize(cubeFace: CubeFace) -> FaceSize {
         switch cubeFace {
         case .top, .bottom:
             return FaceSize(maxX: length, maxY: width)

@@ -9,7 +9,7 @@ public class LevelRandomizer {
         shared = LevelRandomizer()
     }
 
-    func createComplexCubeFaceLevels(seed: Level) -> [Level] {
+    public func createComplexCubeFaceLevels(seed: Level) -> [Level] {
         var levels = [seed]
         var randomizeIterationCount = 0
         
