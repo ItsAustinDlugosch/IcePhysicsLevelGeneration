@@ -236,7 +236,7 @@ extension Level: Codable {
     private enum CodingKeys: String, CodingKey {
         case version
         case playerPoint = "player_point"
-        case faceTiles
+        case faceTiles = "face_tiles"
     }
     
     public func encode(to encoder: Encoder) throws {
