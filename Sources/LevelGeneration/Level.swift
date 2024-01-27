@@ -127,9 +127,9 @@ public struct Level {
                 let slide = slideCriticalTile(origin: criticalTilePoint, direction: direction)                
                 if slide.origin != slide.destination {
                     levelGraph.insertSlide(slide)
+                    changeTileStateIfCurrent(levelPoints: slide.activatedTilePoints, current: .inactive, new: .active)
                     if !allCriticalTiles.contains(slide.destination) {
                         setTileState(levelPoint: slide.destination, tileState: .critical)
-                        changeTileStateIfCurrent(levelPoints: slide.activatedTilePoints, current: .inactive, new: .active)
                         foundCriticalTilePoints.append(slide.destination)
                     }
                 }
