@@ -2,24 +2,62 @@ import Foundation
 
 public struct FaceLevel { // Represents one side of a level within our game
     public let faceSize: FaceSize
-    public let cubeFace: CubeFace    
+    public let face: Face    
 
     public var tiles: [[Tile]]
-    public init(faceSize: FaceSize, cubeFace: CubeFace) {
+    public init(faceSize: FaceSize, face: Face) {
         self.faceSize = faceSize
-        self.cubeFace = cubeFace
+        self.face = face
 
         // Create the grid tiles and set their state as inactive by default
         var tiles = [[Tile]]()
         for x in 0 ..< faceSize.maxX {
             var tileColumn = [Tile]()
             for y in 0 ..< faceSize.maxY {
-                tileColumn.append(Tile(point: LevelPoint(x: x, y: y, cubeFace: cubeFace), tileState: .inactive))
+                tileColumn.append(Tile(point: LevelPoint(face: face, x: x, y: y), tileState: .inactive))
             }
             tiles.append(tileColumn)
         }
         self.tiles = tiles
         setBordersToWall() // Testing purposes
+    }
+
+    public init?(intTiles: [[Int]], face: Face) {
+        func tilesToFaceSize<T>(_ grid: [[T]]) -> FaceSize? {
+            let maxY = grid.count
+            guard maxY != 0, let firstRow = grid.first else {
+                return nil
+            }
+            if grid.allSatisfy({ $0.count == firstRow.count }) {
+                return FaceSize(maxX: firstRow.count, maxY: maxY)
+            }
+            return nil
+        }
+
+        guard let faceSize = tilesToFaceSize(intTiles) else {
+            return nil
+        }
+        self.faceSize = faceSize
+        self.face = face
+        var tiles = [[Tile]]()
+        for x in 0 ..< intTiles.count {
+            var tileColumn = [Tile]()
+            for y in 0 ..< intTiles[x].count  {
+                let tileState: TileState
+                switch intTiles[x][y] {
+                case 0:
+                    tileState = .inactive
+                case 1:
+                    tileState = .wall
+                default:
+                    print("Unexpected tile state: \(intTiles[x][y])")
+                    return nil
+                }
+                tileColumn.append(Tile(point: LevelPoint(face: face, x: x, y: y), tileState: tileState))
+            }
+            tiles.append(tileColumn)
+        }        
+        self.tiles = tiles
     }
 
     // Initializing function that sets the state of border tiles to .wall

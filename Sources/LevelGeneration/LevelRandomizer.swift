@@ -9,7 +9,7 @@ public class LevelRandomizer {
         shared = LevelRandomizer()
     }
 
-    public func createComplexCubeFaceLevels(seed: Level) -> [Level] {
+    public func createComplexFaceLevels(seed: Level) -> [Level] {
         var levels = [seed]
         var randomizeIterationCount = 0
         
@@ -35,7 +35,7 @@ public class LevelRandomizer {
                 }            
             } while true
         }
-        func unlockCubeFace() {
+        func unlockFace() {
             precondition(levels.count > 0, "There must be a level seed to randomize")
             var complexLevel = levels[levels.count - 1]
             let borderPoints = Set(complexLevel.faceLevels.flatMap { $0.borderPoints() })
@@ -46,7 +46,7 @@ public class LevelRandomizer {
                     return false
                 }
                 // There must be exactly one wall state                
-                let adjacentWallPoints = adjacentPoints.filter { complexLevel.faceLevels[$0.cubeFace.rawValue].tiles[$0.x][$0.y].tileState == .wall } 
+                let adjacentWallPoints = adjacentPoints.filter { complexLevel.faceLevels[$0.face.rawValue].tiles[$0.x][$0.y].tileState == .wall } 
                 if adjacentWallPoints.count == 1 {
                     return true                    
                 }
@@ -57,11 +57,11 @@ public class LevelRandomizer {
             }
             let adjacentPoints = complexLevel.adjacentPoints(levelPoint: randomEligiblePoint)
             let (adjacentWallPoint, direction) = adjacentPoints.filter {
-                complexLevel.faceLevels[$0.adjacentPoint.cubeFace.rawValue].tiles[$0.adjacentPoint.x][$0.adjacentPoint.y].tileState == .wall
+                complexLevel.faceLevels[$0.adjacentPoint.face.rawValue].tiles[$0.adjacentPoint.x][$0.adjacentPoint.y].tileState == .wall
             }[0]
-            complexLevel.faceLevels[adjacentWallPoint.cubeFace.rawValue].tiles[adjacentWallPoint.x][adjacentWallPoint.y].tileState = .inactive
+            complexLevel.faceLevels[adjacentWallPoint.face.rawValue].tiles[adjacentWallPoint.x][adjacentWallPoint.y].tileState = .inactive
             let secondAdjacentWallPoint = complexLevel.adjacentPoint(from: adjacentWallPoint, direction: direction).adjacentPoint
-            complexLevel.faceLevels[secondAdjacentWallPoint.cubeFace.rawValue].tiles[secondAdjacentWallPoint.x][secondAdjacentWallPoint.y].tileState = .inactive            
+            complexLevel.faceLevels[secondAdjacentWallPoint.face.rawValue].tiles[secondAdjacentWallPoint.x][secondAdjacentWallPoint.y].tileState = .inactive            
             complexLevel.resetLevel()
 
             func makeSolvableLevel() {
@@ -75,7 +75,7 @@ public class LevelRandomizer {
             levels.append(complexLevel)
         }        
         interruptSlides()
-        unlockCubeFace()
+        unlockFace()
         return levels        
     }
 }
