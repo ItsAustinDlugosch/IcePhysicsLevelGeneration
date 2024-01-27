@@ -1,7 +1,7 @@
 public struct LevelSize { // Defines a level size with a length, width, and height
-    let length: Int
-    let width: Int
-    let height: Int
+    public let length: Int
+    public let width: Int
+    public let height: Int
 
     public init(length:Int, width: Int, height: Int) {
         self.length = length

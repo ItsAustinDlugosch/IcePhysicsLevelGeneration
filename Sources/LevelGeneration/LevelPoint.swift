@@ -1,7 +1,7 @@
 public struct LevelPoint { // Defines a point with an x and y value
-    let x: Int
-    let y: Int
-    let cubeFace: CubeFace
+    public let x: Int
+    public let y: Int
+    public let cubeFace: CubeFace
 
     public init(x: Int, y: Int, cubeFace: CubeFace) {
         self.x = x

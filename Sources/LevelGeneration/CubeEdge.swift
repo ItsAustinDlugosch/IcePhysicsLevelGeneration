@@ -1,6 +1,6 @@
 public struct CubeEdge: Equatable, Hashable {
-    let cubeFace: CubeFace
-    let direction: Direction
+    public let cubeFace: CubeFace
+    public let direction: Direction
 
     init(_ cubeFace: CubeFace, _ direction: Direction) {
         self.cubeFace = cubeFace

@@ -1,10 +1,10 @@
 public struct Slide { // Represents a "slide" that connects two critical points
-    let origin: LevelPoint // Where the slide begins
-    let destination: LevelPoint // Where the slide ends
+    public let origin: LevelPoint // Where the slide begins
+    public let destination: LevelPoint // Where the slide ends
     
-    let activatedTilePoints: [LevelPoint] // All of the points along the slide other than the origin and destination
+    public let activatedTilePoints: [LevelPoint] // All of the points along the slide other than the origin and destination
 
-    init(origin: LevelPoint, destination: LevelPoint, activatedTilePoints: [LevelPoint]) {
+    public init(origin: LevelPoint, destination: LevelPoint, activatedTilePoints: [LevelPoint]) {
         self.origin = origin
         self.destination = destination
         self.activatedTilePoints = activatedTilePoints
@@ -12,7 +12,7 @@ public struct Slide { // Represents a "slide" that connects two critical points
 
     private var protected = false // A slide is protected when it is manually created rather than randomly generated
     
-    mutating func protectSlide() {
+    public mutating func protectSlide() {
         protected = true
     }
 }
