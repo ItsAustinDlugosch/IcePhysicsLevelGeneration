@@ -65,6 +65,8 @@ public struct Level {
         self.levelSize = levelSize
         self.startingPosition = startingPosition
         self.faceLevels = faceLevels
+        setTileState(levelPoint: startingPosition, tileState: .critical)
+        initializeCriticalTiles()
     }
 
     // Initializing function that is used to set the state of one or multiple tiles
