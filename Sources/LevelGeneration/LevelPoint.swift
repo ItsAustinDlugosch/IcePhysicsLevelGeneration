@@ -34,7 +34,10 @@ extension LevelPoint: Codable {
     }
 
     public func encode(to encoder: Encoder) throws {
-        
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(face.rawValue, forKey: .face)
+        try container.encode(x, forKey: .x)
+        try container.encode(y, forKey: .y)
     }
 
     public init(from decoder: Decoder) throws {

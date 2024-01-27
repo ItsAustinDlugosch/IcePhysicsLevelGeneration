@@ -242,7 +242,24 @@ extension Level: Codable {
     }
     
     public func encode(to encoder: Encoder) throws {
-        
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(Level.version, forKey: .version)
+        try container.encode(startingPosition, forKey: .playerPoint)
+        let intTiles: [[[Int]]] = {
+            faceLevels.map { faceLevel in
+                faceLevel.tiles.map { tileColumn in
+                    tileColumn.map { tile in
+                        switch tile.tileState {
+                        case .active, .critical:
+                            return 0
+                        case .inactive, .wall:
+                            return 1                        
+                        }
+                    }
+                }
+            }
+        }()
+        try container.encode(intTiles, forKey: .faceTiles)
     }
 
     public init(from decoder: Decoder) throws {
