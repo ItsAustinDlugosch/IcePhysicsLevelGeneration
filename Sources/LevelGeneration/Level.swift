@@ -91,7 +91,7 @@ public struct Level {
 
     static let crossEdgeMap: [Edge:(Face, Direction, [EdgeTransformation])] = [
       Edge(.back, .up):(.bottom, .up, [.maxY]),
-      Edge(.back, .right):(.right, .down, [.swap, .invertDeltaY, .invertDeltaX]),
+      Edge(.back, .right):(.right, .down, [.invertDeltaY, .swap, .minY]),
       Edge(.back, .down):(.top, .down, [.minY]),
       Edge(.back, .left):(.left, .down, [.swap]),
       Edge(.left, .up):(.back, .right, [.swap]),
@@ -109,7 +109,7 @@ public struct Level {
       Edge(.front, .up):(.top, .up, [.maxY]),
       Edge(.front, .right):(.right, .up, [.swap]),
       Edge(.front, .down):(.bottom, .down, [.minY]),
-      Edge(.front, .left):(.left, .up, [.swap, .invertDeltaY, .invertDeltaX]),
+      Edge(.front, .left):(.left, .up, [.invertDeltaY, .swap, .maxY]),
       Edge(.bottom, .up):(.front, .up, [.maxY]),
       Edge(.bottom, .right):(.right, .left, [.invertDeltaY, .maxX]),
       Edge(.bottom, .down):(.back, .down, [.minY]),
