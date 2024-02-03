@@ -1,4 +1,4 @@
-public struct LevelPoint { // Defines a point with an x and y value
+public struct LevelPoint: SpecialTileTypeData { // Defines a point with an x and y value
     public let face: Face
     public let x: Int
     public let y: Int

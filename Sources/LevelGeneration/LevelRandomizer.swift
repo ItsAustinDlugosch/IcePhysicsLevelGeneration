@@ -25,7 +25,7 @@ public class LevelRandomizer {
                 guard let randomViableActiveGridPoint = viableActiveGridPoints.randomElement() else {
                     break
                 }
-                complexLevel.setTileState(levelPoint: randomViableActiveGridPoint, tileState: .wall)
+                complexLevel.setSpecialTileType(levelPoint: randomViableActiveGridPoint, specialTileType: .wall)
                 complexLevel.resetLevel()
                 if complexLevel.solvable() {                
                     levels.append(complexLevel)
@@ -46,7 +46,7 @@ public class LevelRandomizer {
                     return false
                 }
                 // There must be exactly one wall state                
-                let adjacentWallPoints = adjacentPoints.filter { complexLevel.faceLevels[$0.face.rawValue].tiles[$0.x][$0.y].tileState == .wall } 
+                let adjacentWallPoints = adjacentPoints.filter { complexLevel.faceLevels[$0.face.rawValue].tiles[$0.x][$0.y].specialTileType == .wall }
                 if adjacentWallPoints.count == 1 {
                     return true                    
                 }
@@ -57,7 +57,7 @@ public class LevelRandomizer {
             }
             let adjacentPoints = complexLevel.adjacentPoints(levelPoint: randomEligiblePoint)
             let (adjacentWallPoint, direction) = adjacentPoints.filter {
-                complexLevel.faceLevels[$0.adjacentPoint.face.rawValue].tiles[$0.adjacentPoint.x][$0.adjacentPoint.y].tileState == .wall
+                complexLevel.faceLevels[$0.adjacentPoint.face.rawValue].tiles[$0.adjacentPoint.x][$0.adjacentPoint.y].specialTileType == .wall
             }[0]
             complexLevel.faceLevels[adjacentWallPoint.face.rawValue].tiles[adjacentWallPoint.x][adjacentWallPoint.y].tileState = .inactive
             let secondAdjacentWallPoint = complexLevel.adjacentPoint(from: adjacentWallPoint, direction: direction).adjacentPoint
@@ -78,5 +78,4 @@ public class LevelRandomizer {
         unlockFace()
         return levels        
     }
-}
-
+}    

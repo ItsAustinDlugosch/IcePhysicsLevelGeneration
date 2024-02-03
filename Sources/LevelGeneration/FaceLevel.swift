@@ -19,10 +19,10 @@ public struct FaceLevel { // Represents one side of a level within our game
             tiles.append(tileColumn)
         }
         self.tiles = tiles
-        setBordersToWall() // Testing purposes
+        setSpecialTileType(levelPoints: borderPoints(), specialTileType: .wall)
     }
 
-    public init?(intTiles: [[Int]], face: Face) {
+    public init?(intTiles: [[Int]], specialTileData: [LevelPoint: any SpecialTileTypeData], face: Face) {
         func tilesToFaceSize<T>(_ grid: [[T]]) -> FaceSize? {
             let maxY = grid.count
             guard maxY != 0, let firstRow = grid.first else {
@@ -43,29 +43,31 @@ public struct FaceLevel { // Represents one side of a level within our game
         for x in 0 ..< intTiles.count {
             var tileColumn = [Tile]()
             for y in 0 ..< intTiles[x].count  {
-                let tileState: TileState
+                let specialTileType: SpecialTileType?
                 switch intTiles[x][y] {
                 case 0:
-                    tileState = .inactive
+                    specialTileType = nil
                 case 1:
-                    tileState = .wall
+                    specialTileType = .wall
+                case 2:
+                    guard let pair = specialTileData[LevelPoint(face: face, x: x, y: y)] as? DirectionPair else {
+                        fatalError("Expected associated value of DirectionPair at LevelPoint(face: \(face.rawValue), x: \(x), y: \(y)).")
+                    }
+                    specialTileType = .directionShift(pair: pair)
+                case 3:
+                    guard let destination = specialTileData[LevelPoint(face: face, x: x, y: y)] as? LevelPoint else {
+                        fatalError("Expected associated value of LevelPoint at LevelPoint(face: \(face.rawValue), x: \(x), y: \(y)).")
+                    }
+                    specialTileType = .portal(to: destination)
                 default:
                     print("Unexpected tile state: \(intTiles[x][y])")
                     return nil
                 }
-                tileColumn.append(Tile(point: LevelPoint(face: face, x: x, y: y), tileState: tileState))
+                tileColumn.append(Tile(point: LevelPoint(face: face, x: x, y: y), specialTileType: specialTileType))
             }
             tiles.append(tileColumn)
         }        
         self.tiles = tiles
-    }
-
-    // Initializing function that sets the state of border tiles to .wall
-    mutating func setBordersToWall() {
-        let borderPoints = borderPoints()
-        for borderPoint in borderPoints {
-            tiles[borderPoint.x][borderPoint.y].tileState = .wall
-        }
     }
 
     // Initializing function that is used to set the state of one or multiple tiles
@@ -84,6 +86,14 @@ public struct FaceLevel { // Represents one side of a level within our game
     }
     public mutating func changeTileStateIfCurrent(levelPoints: [LevelPoint], current currentTileState: TileState, new newTileState: TileState) {
         levelPoints.forEach { changeTileStateIfCurrent(levelPoint: $0, current: currentTileState, new: newTileState) }
+    }
+
+    // Initializing function that is used to set the sepcialTileType of one or multiple tiles
+    public mutating func setSpecialTileType(levelPoint: LevelPoint, specialTileType: SpecialTileType) {
+        tiles[levelPoint.x][levelPoint.y].specialTileType = specialTileType
+    }
+    public mutating func setSpecialTileType(levelPoints: [LevelPoint], specialTileType: SpecialTileType) {
+        levelPoints.forEach { setSpecialTileType(levelPoint: $0, specialTileType: specialTileType) }
     }
 
     // Returns the points of tiles along the border of a face

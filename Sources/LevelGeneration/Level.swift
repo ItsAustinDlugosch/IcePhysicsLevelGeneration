@@ -69,7 +69,7 @@ public struct Level {
         initializeCriticalTiles()
     }
 
-    // Initializing function that is used to set the state of one or multiple tiles
+    // Used to set the state of one or multiple tiles
     public mutating func setTileState(levelPoint: LevelPoint, tileState: TileState) {
         faceLevels[levelPoint.face.rawValue].setTileState(levelPoint: levelPoint, tileState: tileState)
     }
@@ -77,12 +77,20 @@ public struct Level {
         levelPoints.forEach { setTileState(levelPoint: $0, tileState: tileState) }
     }
 
-    // Initializing functiona that is used to change the state of one or multiple tiles if they match a current tile state
+    // Used to change the state of one or multiple tiles if they match a current tile state
     public mutating func changeTileStateIfCurrent(levelPoint: LevelPoint, current currentTileState: TileState, new newTileState: TileState) {
         faceLevels[levelPoint.face.rawValue].changeTileStateIfCurrent(levelPoint: levelPoint, current: currentTileState, new: newTileState)        
     }
     public mutating func changeTileStateIfCurrent(levelPoints: [LevelPoint], current currentTileState: TileState, new newTileState: TileState) {
         levelPoints.forEach { changeTileStateIfCurrent(levelPoint: $0, current: currentTileState, new: newTileState) }   
+    }
+
+    // Used to set the SpecialTileType of one or multiple tiles
+    public mutating func setSpecialTileType(levelPoint: LevelPoint, specialTileType: SpecialTileType) {
+        faceLevels[levelPoint.face.rawValue].setSpecialTileType(levelPoint: levelPoint, specialTileType: specialTileType)
+    }
+    public mutating func setSpecialTileType(levelPoints: [LevelPoint], specialTileType: SpecialTileType) {
+        levelPoints.forEach { setSpecialTileType(levelPoint: $0, specialTileType: specialTileType) }
     }
 
     func tilePointsOfState(tileState: TileState) -> [LevelPoint] {
@@ -162,10 +170,27 @@ public struct Level {
         var previous = origin
         var (destination, direction) = adjacentPoint(from: previous, direction: direction)
         var activatedTilePoints = [LevelPoint]()
-        while faceLevels[destination.face.rawValue].tiles[destination.x][destination.y].tileState != .wall {
+        while faceLevels[destination.face.rawValue].tiles[destination.x][destination.y].specialTileType != .wall {
             previous = destination
-            activatedTilePoints.append(previous)
-            (destination, direction) = adjacentPoint(from: destination, direction: direction)
+            activatedTilePoints.append(destination)
+            switch faceLevels[destination.face.rawValue].tiles[destination.x][destination.y].specialTileType {
+            case nil:
+                (destination, direction) = adjacentPoint(from: destination, direction: direction)
+            case .directionShift(let directionPair):
+                guard let shiftedDirection = directionPair.shiftDirection(direction) else {
+                    break
+                }
+                (destination, direction) = adjacentPoint(from: destination, direction: shiftedDirection)
+            case .portal(let portalExit):
+                activatedTilePoints.append(portalExit)
+                (destination, direction) = adjacentPoint(from: portalExit, direction: direction)
+                // Portal logic, when stopping on a portal, go backwards through portal in opposite direction
+                if case .wall = faceLevels[destination.face.rawValue].tiles[destination.x][destination.y].specialTileType {
+                    (destination, direction) = adjacentPoint(from: previous, direction: direction.toggle())
+                }                
+            default:
+                fatalError("Unexpectedly found wall at destination")
+            }                             
         }
         return Slide(origin: origin, destination: previous, activatedTilePoints: activatedTilePoints)
     }
@@ -233,33 +258,47 @@ public struct Level {
 }
 
 extension Level: Codable {
-    static let version = "1.0.0"
+    static let version = "2.0.0"
     
     private enum CodingKeys: String, CodingKey {
         case version
         case playerPoint = "player_point"
         case faceTiles = "face_tiles"
+        case directionShiftTileData = "direction_shift_tile_data"
+        case portalTileData = "portal_tile_data"
     }
     
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(Level.version, forKey: .version)
         try container.encode(startingPosition, forKey: .playerPoint)
+        var directionShiftTileData = [LevelPoint: DirectionPair]()
+        var portalTileData = [LevelPoint: LevelPoint]()
         let intTiles: [[[Int]]] = {
             faceLevels.map { faceLevel in
                 faceLevel.tiles.map { tileColumn in
                     tileColumn.map { tile in
-                        switch tile.tileState {
-                        case .active, .critical:
-                            return 0
-                        case .inactive, .wall:
-                            return 1                        
+                        let tileState = tile.tileState
+                        let specialTileType = tile.specialTileType                        
+                        if tileState == .inactive && specialTileType == nil || specialTileType == .wall {
+                            return 1
                         }
+                        if case .directionShift(let directionPair) = specialTileType {
+                            directionShiftTileData[tile.point] = directionPair
+                            return 2                            
+                        }
+                        if case .portal(let portalExit) = specialTileType {
+                            portalTileData[tile.point] = portalExit
+                            return 3
+                        }
+                        return 0
                     }
                 }
             }
         }()
         try container.encode(intTiles, forKey: .faceTiles)
+        try container.encode(directionShiftTileData, forKey: .directionShiftTileData)
+        try container.encode(portalTileData, forKey: .portalTileData)
     }
 
     public init(from decoder: Decoder) throws {
@@ -272,13 +311,20 @@ extension Level: Codable {
         
         let playerPoint = try container.decode(LevelPoint.self, forKey: .playerPoint)
         let faceTiles = try container.decode([[[Int]]].self, forKey: .faceTiles)
+        let directionShiftTileData = try container.decode([LevelPoint: DirectionPair].self, forKey: .directionShiftTileData)
+        let portalTileData = try container.decode([LevelPoint: LevelPoint].self, forKey: .portalTileData)
 
         let faceLevels = try {
             var faceLevels = [FaceLevel]()
             for faceIndex in 0 ..<  Face.allCases.count {
                 let intTiles = faceTiles[faceIndex]
                 let face = Face.allCases[faceIndex]
-                guard let faceLevel = FaceLevel(intTiles: intTiles, face: face) else {
+                
+                var specialTileData = [LevelPoint: any SpecialTileTypeData]()
+                directionShiftTileData.forEach { (key, value) in specialTileData[key] = value }
+                portalTileData.forEach { (key, value) in specialTileData[key] = value }
+                
+                guard let faceLevel = FaceLevel(intTiles: intTiles, specialTileData: specialTileData, face: face) else {
                     throw DecodingError.dataCorruptedError(forKey: .faceTiles, in: container, debugDescription: "Could not create FaceLevels from data")
                 }
                 faceLevels.append(faceLevel)
