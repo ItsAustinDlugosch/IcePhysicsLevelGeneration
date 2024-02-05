@@ -306,11 +306,13 @@ extension Level: Codable {
         try container.encode(portalTileData, forKey: .portalTileData)
     }
 
+    static let supportedVersions = ["1.0.0", "1.1.0"]
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         let version = try container.decode(String.self, forKey: .version)
-        guard version == Level.version else {
+        guard Level.supportedVersions.contains(version) else {
             throw DecodingError.dataCorruptedError(forKey: .version, in: container, debugDescription: "Unsuported version: \(version)")
         }
         
