@@ -13,7 +13,7 @@ public struct DirectionPair: SpecialTileTypeData, Equatable, Hashable, Codable {
             return entranceTwo.toggle()
         }
         if entrance == entranceTwo {
-            return entranceTwo.toggle()
+            return entranceOne.toggle()
         }
         return nil
     }

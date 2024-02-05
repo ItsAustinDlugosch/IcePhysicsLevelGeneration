@@ -5,7 +5,14 @@ public enum SpecialTileType: CustomStringConvertible, Hashable, Equatable {
     
     
     public var description: String {
-        return String(describing: self)
+        switch self {
+        case .wall:
+            return "wall"
+        case .directionShift:
+            return "directionShift"
+        case .portal:
+            return "portal"
+        }
     }
 
     public static func ==(lhs: SpecialTileType, rhs: SpecialTileType) -> Bool {

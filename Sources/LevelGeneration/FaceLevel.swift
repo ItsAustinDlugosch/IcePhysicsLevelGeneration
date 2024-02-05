@@ -124,13 +124,17 @@ public struct FaceLevel { // Represents one side of a level within our game
     }
 
     // Prints the grid
-    public func printTileStates() {
+    public func printFaceLevel() {
         for y in 0 ..< faceSize.maxY {
-            var stateRow = [TileState]()
+            var descriptionRow = [String]()
             for x in 0 ..< faceSize.maxX {
-                stateRow.append(tiles[x][y].tileState)
+                if let specialTileType = tiles[x][y].specialTileType {
+                    descriptionRow.append(specialTileType.description)
+                } else {
+                    descriptionRow.append(tiles[x][y].tileState.description)
+                }
             }
-            print(stateRow)
+            print(descriptionRow)
         }
     }
 }    

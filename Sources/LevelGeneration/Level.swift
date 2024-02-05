@@ -1,3 +1,4 @@
+
 public struct Level {
     public let levelSize: LevelSize
     public let startingPosition: LevelPoint
@@ -171,22 +172,26 @@ public struct Level {
         var (destination, direction) = adjacentPoint(from: previous, direction: direction)
         var activatedTilePoints = [LevelPoint]()
         while faceLevels[destination.face.rawValue].tiles[destination.x][destination.y].specialTileType != .wall {
-            previous = destination
-            activatedTilePoints.append(destination)
             switch faceLevels[destination.face.rawValue].tiles[destination.x][destination.y].specialTileType {
             case nil:
+                previous = destination
+                activatedTilePoints.append(destination)            
                 (destination, direction) = adjacentPoint(from: destination, direction: direction)
             case .directionShift(let directionPair):
                 guard let shiftedDirection = directionPair.shiftDirection(direction) else {
-                    break
+                    return Slide(origin: origin, destination: previous, activatedTilePoints: activatedTilePoints)
                 }
+                previous = destination
+                activatedTilePoints.append(destination)            
                 (destination, direction) = adjacentPoint(from: destination, direction: shiftedDirection)
             case .portal(let portalExit):
-                activatedTilePoints.append(portalExit)
+                previous = destination
+                activatedTilePoints.append(destination)            
                 (destination, direction) = adjacentPoint(from: portalExit, direction: direction)
                 // Portal logic, when stopping on a portal, go backwards through portal in opposite direction
                 if case .wall = faceLevels[destination.face.rawValue].tiles[destination.x][destination.y].specialTileType {
                     (destination, direction) = adjacentPoint(from: previous, direction: direction.toggle())
+                    print(destination, direction)
                 }                
             default:
                 fatalError("Unexpectedly found wall at destination")
@@ -249,16 +254,16 @@ public struct Level {
         return true
     }
 
-    public func printTileStates() {
+    public func printLevel() {
         for face in [Face]([.back, .left, .top, .right, .front, .bottom]) {
             print(face)
-            faceLevels[face.rawValue].printTileStates()
+            faceLevels[face.rawValue].printFaceLevel()
         }              
     }
 }
 
 extension Level: Codable {
-    static let version = "2.0.0"
+    static let version = "1.1.0"
     
     private enum CodingKeys: String, CodingKey {
         case version
@@ -311,8 +316,8 @@ extension Level: Codable {
         
         let playerPoint = try container.decode(LevelPoint.self, forKey: .playerPoint)
         let faceTiles = try container.decode([[[Int]]].self, forKey: .faceTiles)
-        let directionShiftTileData = try container.decode([LevelPoint: DirectionPair].self, forKey: .directionShiftTileData)
-        let portalTileData = try container.decode([LevelPoint: LevelPoint].self, forKey: .portalTileData)
+        let directionShiftTileData = try container.decodeIfPresent([LevelPoint: DirectionPair].self, forKey: .directionShiftTileData) ?? [LevelPoint: DirectionPair]()
+        let portalTileData = try container.decodeIfPresent([LevelPoint: LevelPoint].self, forKey: .portalTileData) ?? [LevelPoint: LevelPoint]()
 
         let faceLevels = try {
             var faceLevels = [FaceLevel]()
