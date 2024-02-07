@@ -191,7 +191,6 @@ public struct Level {
                 // Portal logic, when stopping on a portal, go backwards through portal in opposite direction
                 if case .wall = faceLevels[destination.face.rawValue].tiles[destination.x][destination.y].specialTileType {
                     (destination, direction) = adjacentPoint(from: previous, direction: direction.toggle())
-                    print(destination, direction)
                 }                
             default:
                 fatalError("Unexpectedly found wall at destination")
