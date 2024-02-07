@@ -21,4 +21,23 @@ public struct DirectionPair: SpecialTileTypeData, Equatable, Hashable, Codable {
     public static func ==(lhs: DirectionPair, rhs: DirectionPair) -> Bool {
         return Set([lhs.entranceOne, lhs.entranceTwo]) == Set([rhs.entranceOne, rhs.entranceTwo])
     }
+
+    private enum CodingKeys: String, CodingKey {
+        case entranceOne = "entrance_one"
+        case entranceTwo = "entrance_two"
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(entranceOne, forKey: .entranceOne)
+        try container.encode(entranceTwo, forKey: .entranceTwo)
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let entranceOne = try container.decode(Direction.self, forKey: .entranceOne)
+        let entranceTwo = try container.decode(Direction.self, forKey: .entranceTwo)
+        self = DirectionPair(entranceOne, entranceTwo)
+    }
+      
 }
