@@ -87,10 +87,10 @@ public struct Level {
     }
 
     // Used to set the SpecialTileType of one or multiple tiles
-    public mutating func setSpecialTileType(levelPoint: LevelPoint, specialTileType: SpecialTileType) {
+    public mutating func setSpecialTileType(levelPoint: LevelPoint, specialTileType: SpecialTileType?) {
         faceLevels[levelPoint.face.rawValue].setSpecialTileType(levelPoint: levelPoint, specialTileType: specialTileType)
     }
-    public mutating func setSpecialTileType(levelPoints: [LevelPoint], specialTileType: SpecialTileType) {
+    public mutating func setSpecialTileType(levelPoints: [LevelPoint], specialTileType: SpecialTileType?) {
         levelPoints.forEach { setSpecialTileType(levelPoint: $0, specialTileType: specialTileType) }
     }
 

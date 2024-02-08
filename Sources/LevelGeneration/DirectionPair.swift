@@ -1,43 +1,43 @@
 public struct DirectionPair: SpecialTileTypeData, Equatable, Hashable, Codable {
 
-    let entranceOne: Direction
-    let entranceTwo: Direction
+    let exitOne: Direction
+    let exitTwo: Direction
 
-    public init(_ entranceOne: Direction, _ entranceTwo: Direction) {
-        self.entranceOne = entranceOne
-        self.entranceTwo = entranceTwo
+    public init(_ exitOne: Direction, _ exitTwo: Direction) {
+        self.exitOne = exitOne
+        self.exitTwo = exitTwo
     }
     
-    func shiftDirection(_ entrance: Direction) -> Direction? {
-        if entrance == entranceOne {
-            return entranceTwo.toggle()
+    func shiftDirection(_ exit: Direction) -> Direction? {
+        if exit == exitOne.toggle() {
+            return exitTwo
         }
-        if entrance == entranceTwo {
-            return entranceOne.toggle()
+        if exit == exitTwo.toggle() {
+            return exitOne
         }
         return nil
     }
     
     public static func ==(lhs: DirectionPair, rhs: DirectionPair) -> Bool {
-        return Set([lhs.entranceOne, lhs.entranceTwo]) == Set([rhs.entranceOne, rhs.entranceTwo])
+        return Set([lhs.exitOne, lhs.exitTwo]) == Set([rhs.exitOne, rhs.exitTwo])
     }
 
     private enum CodingKeys: String, CodingKey {
-        case entranceOne = "entrance_one"
-        case entranceTwo = "entrance_two"
+        case exitOne = "exit_one"
+        case exitTwo = "exit_two"
     }
     
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(entranceOne, forKey: .entranceOne)
-        try container.encode(entranceTwo, forKey: .entranceTwo)
+        try container.encode(exitOne, forKey: .exitOne)
+        try container.encode(exitTwo, forKey: .exitTwo)
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        let entranceOne = try container.decode(Direction.self, forKey: .entranceOne)
-        let entranceTwo = try container.decode(Direction.self, forKey: .entranceTwo)
-        self = DirectionPair(entranceOne, entranceTwo)
+        let exitOne = try container.decode(Direction.self, forKey: .exitOne)
+        let exitTwo = try container.decode(Direction.self, forKey: .exitTwo)
+        self = DirectionPair(exitOne, exitTwo)
     }
       
 }

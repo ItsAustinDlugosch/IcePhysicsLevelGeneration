@@ -89,10 +89,10 @@ public struct FaceLevel { // Represents one side of a level within our game
     }
 
     // Initializing function that is used to set the sepcialTileType of one or multiple tiles
-    public mutating func setSpecialTileType(levelPoint: LevelPoint, specialTileType: SpecialTileType) {
+    public mutating func setSpecialTileType(levelPoint: LevelPoint, specialTileType: SpecialTileType?) {
         tiles[levelPoint.x][levelPoint.y].specialTileType = specialTileType
     }
-    public mutating func setSpecialTileType(levelPoints: [LevelPoint], specialTileType: SpecialTileType) {
+    public mutating func setSpecialTileType(levelPoints: [LevelPoint], specialTileType: SpecialTileType?) {
         levelPoints.forEach { setSpecialTileType(levelPoint: $0, specialTileType: specialTileType) }
     }
 
