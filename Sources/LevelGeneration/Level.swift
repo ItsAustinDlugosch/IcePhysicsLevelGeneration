@@ -5,6 +5,24 @@ public struct Level {
 
     public var faceLevels: [FaceLevel]
     public var levelGraph = Graph()
+
+    lazy var associatedSpecialData: [LevelPoint: any SpecialTileTypeData] = {
+        var associatedSpecialData = [LevelPoint: any SpecialTileTypeData]()
+        for faceLevel in faceLevels {
+            for tileColumn in faceLevel.tiles {
+                for tile in tileColumn {
+                    if case .directionShift(let directionPair) = tile.specialTileType {
+                        associatedSpecialData[tile.point] = directionPair
+                    }
+                    if case .portal(let destination) = tile.specialTileType {
+                        associatedSpecialData[tile.point] = destination
+                    }                    
+                }
+            }
+        }
+        return associatedSpecialData
+    }()
+    
     public init(levelSize: LevelSize, startingPosition: LevelPoint) {
         self.levelSize = levelSize
         self.startingPosition = startingPosition
