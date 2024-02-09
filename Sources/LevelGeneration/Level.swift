@@ -1,6 +1,6 @@
 public struct Level {
     public let levelSize: LevelSize
-    public let startingPosition: LevelPoint
+    public var startingPosition: LevelPoint
 
     public var faceLevels: [FaceLevel]
     public var levelGraph = Graph()    
