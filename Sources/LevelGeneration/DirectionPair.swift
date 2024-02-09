@@ -4,7 +4,7 @@ public struct DirectionPair: SpecialTileTypeData, Equatable, Hashable, Codable {
     public let exitTwo: Direction
 
     public init?(_ exitOne: Direction, _ exitTwo: Direction) {
-        guard exitOne.toggle() == exitTwo, exitTwo.toggle() == exitOne else {
+        guard exitOne.toggle() != exitTwo, exitTwo.toggle() != exitOne else {
             return nil
         }
         self.exitOne = exitOne
@@ -40,7 +40,7 @@ public struct DirectionPair: SpecialTileTypeData, Equatable, Hashable, Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let exitOne = try container.decode(Direction.self, forKey: .exitOne)
         let exitTwo = try container.decode(Direction.self, forKey: .exitTwo)
-        guard exitOne.toggle() == exitTwo, exitTwo.toggle() == exitOne else {
+        guard exitOne.toggle() != exitTwo, exitTwo.toggle() != exitOne else {
             fatalError("Cannot decode invalid direction pair")
         }
         self = DirectionPair(exitOne, exitTwo)!
