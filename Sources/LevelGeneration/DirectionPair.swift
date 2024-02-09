@@ -1,7 +1,7 @@
 public struct DirectionPair: SpecialTileTypeData, Equatable, Hashable, Codable {
 
-    let exitOne: Direction
-    let exitTwo: Direction
+    public let exitOne: Direction
+    public let exitTwo: Direction
 
     public init(_ exitOne: Direction, _ exitTwo: Direction) {
         self.exitOne = exitOne
