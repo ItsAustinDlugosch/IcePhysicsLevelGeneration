@@ -164,14 +164,18 @@ public struct Level {
         return [Direction]([.up, .down, .left, .right]).map { adjacentPoint(from: levelPoint, direction: $0) }
     }
 
-    public func slideCriticalTile(origin: LevelPoint, direction: Direction) -> Slide {
-        let originFaceLevel = faceLevels[origin.face.rawValue]
-        precondition(originFaceLevel.tiles[origin.x][origin.y].tileState == .critical,
+    public func slideCriticalTile(originPoint: LevelPoint, originDirection: Direction) -> Slide? {
+        let originPointFaceLevel = faceLevels[originPoint.face.rawValue]
+        precondition(originPointFaceLevel.tiles[originPoint.x][originPoint.y].tileState == .critical,
                      "Tile state must be critical in order to slide.")
-        var previous = origin
-        var (destination, direction) = adjacentPoint(from: previous, direction: direction)
+        var previous = originPoint
+        var (destination, direction) = adjacentPoint(from: previous, direction: originDirection)
         var activatedTilePoints = [LevelPoint]()
         while faceLevels[destination.face.rawValue].tiles[destination.x][destination.y].specialTileType != .wall {
+            guard originPoint != destination && originDirection != direction else {
+                // When special tiles that change the state of the grid are added
+                return nil
+            }
             switch faceLevels[destination.face.rawValue].tiles[destination.x][destination.y].specialTileType {
             case nil:
                 previous = destination
@@ -179,7 +183,7 @@ public struct Level {
                 (destination, direction) = adjacentPoint(from: destination, direction: direction)
             case .directionShift(let directionPair):
                 guard let shiftedDirection = directionPair.shiftDirection(direction) else {
-                    return Slide(origin: origin, destination: previous, activatedTilePoints: activatedTilePoints)
+                    return Slide(origin: originPoint, destination: previous, activatedTilePoints: activatedTilePoints)
                 }
                 previous = destination
                 activatedTilePoints.append(destination)            
@@ -189,14 +193,15 @@ public struct Level {
                 activatedTilePoints.append(destination)            
                 (destination, direction) = adjacentPoint(from: portalExit, direction: direction)
                 // Portal logic, when stopping on a portal, go backwards through portal in opposite direction
-                if case .wall = faceLevels[destination.face.rawValue].tiles[destination.x][destination.y].specialTileType {
-                    (destination, direction) = adjacentPoint(from: previous, direction: direction.toggle())
+                if case .wall = faceLevels[destination.face.rawValue].tiles[destination.x][destination.y].specialTileType,
+                   case .portal(let newPortalExit) = faceLevels[previous.face.rawValue].tiles[previous.x][previous.y].specialTileType {
+                    (destination, direction) = adjacentPoint(from: newPortalExit, direction: direction.toggle())
                 }                
             default:
                 fatalError("Unexpectedly found wall at destination")
-            }                             
+            }
         }
-        return Slide(origin: origin, destination: previous, activatedTilePoints: activatedTilePoints)
+        return Slide(origin: originPoint, destination: previous, activatedTilePoints: activatedTilePoints)
     }
 
     mutating func initializeCriticalTiles(criticalTilePoints: [LevelPoint]? = nil) {
@@ -204,13 +209,14 @@ public struct Level {
         var foundCriticalTilePoints = [LevelPoint]()
         for criticalTilePoint in criticalTilePoints ?? allCriticalTiles {            
             for direction in [Direction]([.up, .down, .left, .right]) {
-                let slide = slideCriticalTile(origin: criticalTilePoint, direction: direction)                
-                if !slide.activatedTilePoints.isEmpty {
-                    levelGraph.insertSlide(slide)
-                    changeTileStateIfCurrent(levelPoints: slide.activatedTilePoints, current: .inactive, new: .active)
-                    if !allCriticalTiles.contains(slide.destination) {
-                        setTileState(levelPoint: slide.destination, tileState: .critical)
-                        foundCriticalTilePoints.append(slide.destination)
+                if let slide = slideCriticalTile(originPoint: criticalTilePoint, originDirection: direction) {
+                    if !slide.activatedTilePoints.isEmpty {
+                        levelGraph.insertSlide(slide)
+                        changeTileStateIfCurrent(levelPoints: slide.activatedTilePoints, current: .inactive, new: .active)
+                        if !allCriticalTiles.contains(slide.destination) {
+                            setTileState(levelPoint: slide.destination, tileState: .critical)
+                            foundCriticalTilePoints.append(slide.destination)
+                        }
                     }
                 }
             }
