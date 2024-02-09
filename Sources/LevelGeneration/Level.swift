@@ -165,14 +165,13 @@ public struct Level {
     }
 
     public func slideCriticalTile(originPoint: LevelPoint, originDirection: Direction) -> Slide? {
-        let originPointFaceLevel = faceLevels[originPoint.face.rawValue]
-        precondition(originPointFaceLevel.tiles[originPoint.x][originPoint.y].tileState == .critical,
+        precondition(faceLevels[originPoint.face.rawValue].tiles[originPoint.x][originPoint.y].tileState == .critical,
                      "Tile state must be critical in order to slide.")
         var previous = originPoint
         var (destination, direction) = adjacentPoint(from: previous, direction: originDirection)
         var activatedTilePoints = [LevelPoint]()
         while faceLevels[destination.face.rawValue].tiles[destination.x][destination.y].specialTileType != .wall {
-            guard originPoint != destination && originDirection != direction else {
+            guard originPoint != destination || originDirection != direction else {
                 print(originPoint, destination, originDirection, direction)
                 // When special tiles that change the state of the grid are added
                 return nil
