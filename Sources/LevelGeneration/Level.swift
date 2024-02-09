@@ -172,7 +172,6 @@ public struct Level {
         var activatedTilePoints = [LevelPoint]()
         while faceLevels[destination.face.rawValue].tiles[destination.x][destination.y].specialTileType != .wall {
             guard originPoint != destination || originDirection != direction else {
-                print(originPoint, destination, originDirection, direction)
                 // When special tiles that change the state of the grid are added
                 return nil
             }
