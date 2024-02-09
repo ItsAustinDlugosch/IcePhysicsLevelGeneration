@@ -3,24 +3,7 @@ public struct Level {
     public let startingPosition: LevelPoint
 
     public var faceLevels: [FaceLevel]
-    public var levelGraph = Graph()
-
-    lazy var associatedSpecialData: [LevelPoint: any SpecialTileTypeData] = {
-        var associatedSpecialData = [LevelPoint: any SpecialTileTypeData]()
-        for faceLevel in faceLevels {
-            for tileColumn in faceLevel.tiles {
-                for tile in tileColumn {
-                    if case .directionShift(let directionPair) = tile.specialTileType {
-                        associatedSpecialData[tile.point] = directionPair
-                    }
-                    if case .portal(let destination) = tile.specialTileType {
-                        associatedSpecialData[tile.point] = destination
-                    }                    
-                }
-            }
-        }
-        return associatedSpecialData
-    }()
+    public var levelGraph = Graph()    
     
     public init(levelSize: LevelSize, startingPosition: LevelPoint) {
         self.levelSize = levelSize
@@ -359,5 +342,32 @@ extension Level: Codable {
             throw DecodingError.dataCorruptedError(forKey: .faceTiles, in: container, debugDescription: "Could not create Level from data")
         }
         self = level
+    }
+}
+
+extension Level {
+    public var associatedSpecialData: [LevelPoint: any SpecialTileTypeData] {
+            var associatedSpecialData = [LevelPoint: any SpecialTileTypeData]()
+            for faceLevel in faceLevels {
+                for tileColumn in faceLevel.tiles {
+                    for tile in tileColumn {
+                        if case .directionShift(let directionPair) = tile.specialTileType {
+                            associatedSpecialData[tile.point] = directionPair
+                        }
+                        if case .portal(let destination) = tile.specialTileType {
+                            associatedSpecialData[tile.point] = destination
+                        }                    
+                    }
+                }
+            }
+            return associatedSpecialData
+    }
+    public var portalExitLocations: [LevelPoint] {
+        return associatedSpecialData.compactMap { (tilePoint, associatedSpecialData) in
+            if case .portal = faceLevels[tilePoint.face.rawValue].tiles[tilePoint.x][tilePoint.y].specialTileType {
+                return associatedSpecialData as? LevelPoint
+            }
+            return nil
+        }    
     }
 }
