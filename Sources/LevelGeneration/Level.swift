@@ -198,8 +198,6 @@ public struct Level {
                 fatalError("Unexpectedly found wall at destination")
             }
         }
-        changeTileStateIfCurrent(levelPoints: activatedTilePoints, current: .inactive, new: .active)
-        setTileState(levelPoint: destination, tileState: .critical)
         return Slide(origin: originPoint, destination: previous, activatedTilePoints: activatedTilePoints)
     }
 
@@ -210,8 +208,10 @@ public struct Level {
             for direction in [Direction]([.up, .down, .left, .right]) {
                 if let slide = slideTile(originPoint: criticalTilePoint, originDirection: direction) {
                     if !slide.activatedTilePoints.isEmpty {
+                        changeTileStateIfCurrent(levelPoints: slide.activatedTilePoints, current: .inactive, new: .active)
                         levelGraph.insertSlide(slide)
                         if !allCriticalTiles.contains(slide.destination) {
+                            setTileState(levelPoint: slide.destination, tileState: .critical)
                             foundCriticalTilePoints.append(slide.destination)
                         }
                     }
