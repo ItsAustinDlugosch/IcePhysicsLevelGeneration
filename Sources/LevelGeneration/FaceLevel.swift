@@ -111,11 +111,12 @@ public struct FaceLevel { // Represents one side of a level within our game
     }
     
     // Returns the points of all tiles with a tile state
-    public func tilePointsOfState(tileState: TileState) -> [LevelPoint] {
+    public func tilePointsOfStateAndType(tileState: TileState, specialTileType: SpecialTileType? = nil) -> [LevelPoint] {
         var tilePointsOfState = [LevelPoint]()
         for tileColumn in tiles {
             for tile in tileColumn {
-                if tiles[tile.point.x][tile.point.y].tileState == tileState {
+                if tiles[tile.point.x][tile.point.y].tileState == tileState &&
+                     tiles[tile.point.x][tile.point.y].specialTileType == specialTileType {
                     tilePointsOfState.append(tile.point)
                 }
             }

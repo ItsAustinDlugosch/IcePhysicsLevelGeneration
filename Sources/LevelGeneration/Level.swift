@@ -94,8 +94,8 @@ public struct Level {
         levelPoints.forEach { setSpecialTileType(levelPoint: $0, specialTileType: specialTileType) }
     }
 
-    public func tilePointsOfState(tileState: TileState) -> [LevelPoint] {
-        return faceLevels.flatMap { $0.tilePointsOfState(tileState: tileState) }
+    public func tilePointsOfStateAndType(tileState: TileState, specialTileType: SpecialTileType? = nil) -> [LevelPoint] {
+        return faceLevels.flatMap { $0.tilePointsOfStateAndType(tileState: tileState, specialTileType: specialTileType) }
     }
 
     static let crossEdgeMap: [Edge:(Face, Direction, [EdgeTransformation])] = [
@@ -202,7 +202,7 @@ public struct Level {
     }
 
     mutating func initializeCriticalTiles(criticalTilePoints: [LevelPoint]? = nil) {
-        let allCriticalTiles = tilePointsOfState(tileState: .critical)
+        let allCriticalTiles = tilePointsOfStateAndType(tileState: .critical)
         var foundCriticalTilePoints = [LevelPoint]()
         for criticalTilePoint in criticalTilePoints ?? allCriticalTiles {            
             for direction in [Direction]([.up, .down, .left, .right]) {
@@ -224,7 +224,7 @@ public struct Level {
     }
 
     public func activeTilePointsAdjacentToCriticals() -> [LevelPoint] {
-        let activeTilePoints = tilePointsOfState(tileState: .active)
+        let activeTilePoints = tilePointsOfStateAndType(tileState: .active)
         return activeTilePoints.filter {
             for direction in [Direction]([.up, .down, .left, .right]) {
                 let adjacentPoint = adjacentPoint(from: $0, direction: direction).adjacentPoint
@@ -238,8 +238,8 @@ public struct Level {
 
         // Resets the level to be revalidated
     public mutating func resetLevel() {
-        tilePointsOfState(tileState: .active).forEach { setTileState(levelPoint: $0, tileState: .inactive) }
-        tilePointsOfState(tileState: .critical).forEach { setTileState(levelPoint: $0, tileState: .inactive) }
+        tilePointsOfStateAndType(tileState: .active).forEach { setTileState(levelPoint: $0, tileState: .inactive) }
+        tilePointsOfStateAndType(tileState: .critical).forEach { setTileState(levelPoint: $0, tileState: .inactive) }
         levelGraph.clearGraph()
         setTileState(levelPoint: startingPosition, tileState: .critical)
         initializeCriticalTiles()
@@ -248,7 +248,7 @@ public struct Level {
 
     // Checks if a level grid is solvable by ensuring that every critical point has a path to the starting position    
     public func solvable() -> Bool {
-        for criticalTileGridPoint in tilePointsOfState(tileState: .critical) {
+        for criticalTileGridPoint in tilePointsOfStateAndType(tileState: .critical) {
             if levelGraph.breadthFirstSearch(origin: criticalTileGridPoint, destination: startingPosition) == nil {
                 return false
             }
@@ -375,9 +375,9 @@ extension Level {
     }
 
     public func emptyLevel() -> Level {
-        let inactiveTilePoints = tilePointsOfState(tileState: .inactive)
-        let activeTilePoints = tilePointsOfState(tileState: .active)
-        let criticalTilePoints = tilePointsOfState(tileState: .critical)
+        let inactiveTilePoints = tilePointsOfStateAndType(tileState: .inactive)
+        let activeTilePoints = tilePointsOfStateAndType(tileState: .active)
+        let criticalTilePoints = tilePointsOfStateAndType(tileState: .critical)
         var emptyLevel = self
         emptyLevel.setSpecialTileType(levelPoints: inactiveTilePoints, specialTileType: .wall)
         emptyLevel.setTileState(levelPoints: activeTilePoints + criticalTilePoints, tileState: .inactive)
