@@ -59,6 +59,8 @@ public struct FaceLevel { // Represents one side of a level within our game
                         fatalError("Expected associated value of LevelPoint at LevelPoint(face: \(face.rawValue), x: \(x), y: \(y)).")
                     }
                     specialTileType = .portal(to: destination)
+                case 4:
+                    specialTileType = .sticky
                 default:
                     print("Unexpected tile state: \(intTiles[x][y])")
                     return nil

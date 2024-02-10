@@ -187,13 +187,17 @@ public struct Level {
                 (destination, direction) = adjacentPoint(from: destination, direction: shiftedDirection)
             case .portal(let portalExit):
                 previous = destination
-                activatedTilePoints.append(destination)            
+                activatedTilePoints.append(destination)
+                activatedTilePoints.append(portalExit)            
                 (destination, direction) = adjacentPoint(from: portalExit, direction: direction)
                 // Portal logic, when stopping on a portal, go backwards through portal in opposite direction
                 if case .wall = faceLevels[destination.face.rawValue].tiles[destination.x][destination.y].specialTileType,
                    case .portal(let newPortalExit) = faceLevels[previous.face.rawValue].tiles[previous.x][previous.y].specialTileType {
-                    (destination, direction) = adjacentPoint(from: newPortalExit, direction: direction.toggle())
-                }                
+                    (destination, direction) = adjacentPoint(from: newPortalExit, direction: direction.toggle())                    
+                }
+                   case .sticky:
+                       return Slide(originPoint: originPoint, originDirection: originDirection, destinationPoint: previous, destinationDirection: direction, activatedTilePoints: activatedTilePoints)
+                       
             default:
                 fatalError("Unexpectedly found wall at destination")
             }
@@ -297,6 +301,9 @@ extension Level: Codable {
                         if case .portal(let portalExit) = specialTileType {
                             portalTileData[tile.point] = portalExit
                             return 3
+                        }
+                        if case .sticky = specialTileType {
+                            return 4
                         }
                         return 0
                     }
