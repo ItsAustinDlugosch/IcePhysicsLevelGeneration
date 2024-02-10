@@ -196,7 +196,7 @@ public struct Level {
                     (destination, direction) = adjacentPoint(from: newPortalExit, direction: direction.toggle())                    
                 }
                    case .sticky:
-                       return Slide(originPoint: originPoint, originDirection: originDirection, destinationPoint: previous, destinationDirection: direction, activatedTilePoints: activatedTilePoints)
+                       return Slide(originPoint: originPoint, originDirection: originDirection, destinationPoint: destination, destinationDirection: direction, activatedTilePoints: activatedTilePoints)
                        
             default:
                 fatalError("Unexpectedly found wall at destination")
