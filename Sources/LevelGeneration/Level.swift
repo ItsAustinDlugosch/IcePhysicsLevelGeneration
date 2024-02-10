@@ -3,11 +3,14 @@ public struct Level {
     public var startingPosition: LevelPoint
 
     public var faceLevels: [FaceLevel]
-    public var levelGraph = Graph()    
+    public var levelGraph = Graph()
+
+    private let withTileStates: Bool
     
-    public init(levelSize: LevelSize, startingPosition: LevelPoint) {
+    public init(levelSize: LevelSize, startingPosition: LevelPoint, withTileStates: Bool = true) {
         self.levelSize = levelSize
         self.startingPosition = startingPosition
+        self.withTileStates = withTileStates
         
         // Create the face levels
         var faceLevels = [FaceLevel]()
@@ -211,9 +214,13 @@ public struct Level {
                 if let slide = slideCriticalTile(originPoint: criticalTilePoint, originDirection: direction) {
                     if !slide.activatedTilePoints.isEmpty {
                         levelGraph.insertSlide(slide)
-                        changeTileStateIfCurrent(levelPoints: slide.activatedTilePoints, current: .inactive, new: .active)
+                        if withTileStates {
+                            changeTileStateIfCurrent(levelPoints: slide.activatedTilePoints, current: .inactive, new: .active)
+                        }
                         if !allCriticalTiles.contains(slide.destination) {
-                            setTileState(levelPoint: slide.destination, tileState: .critical)
+                            if withTileStates {
+                                setTileState(levelPoint: slide.destination, tileState: .critical)
+                            }
                             foundCriticalTilePoints.append(slide.destination)
                         }
                     }
