@@ -211,7 +211,7 @@ public struct Level {
         for criticalTilePoint in criticalTilePoints ?? allCriticalTiles {            
             for direction in [Direction]([.up, .down, .left, .right]) {
                 if let slide = slideTile(originPoint: criticalTilePoint, originDirection: direction) {
-                    if !slide.activatedTilePoints.isEmpty {
+                    if !slide.activatedTilePoints.isEmpty || slide.originPoint != slide.destinationPoint {
                         changeTileStateIfCurrent(levelPoints: slide.activatedTilePoints, current: .inactive, new: .active)
                         levelGraph.insertSlide(slide)
                         if !allCriticalTiles.contains(slide.destinationPoint) {
