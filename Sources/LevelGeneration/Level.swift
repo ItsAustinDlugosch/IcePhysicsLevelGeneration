@@ -4,13 +4,10 @@ public struct Level {
 
     public var faceLevels: [FaceLevel]
     public var levelGraph = Graph()
-
-    private let withTileStates: Bool
     
-    public init(levelSize: LevelSize, startingPosition: LevelPoint, withTileStates: Bool = true) {
+    public init(levelSize: LevelSize, startingPosition: LevelPoint) {
         self.levelSize = levelSize
         self.startingPosition = startingPosition
-        self.withTileStates = withTileStates
         
         // Create the face levels
         var faceLevels = [FaceLevel]()
@@ -22,7 +19,7 @@ public struct Level {
         initializeCriticalTiles()
     }
 
-    public init?(faceLevels: [FaceLevel], startingPosition: LevelPoint, withTileStates: Bool = true) {
+    public init?(faceLevels: [FaceLevel], startingPosition: LevelPoint) {
         // Face levels must appear in cube face order
         guard faceLevels.map({$0.face}) == Face.allCases else {
             return nil
@@ -69,7 +66,6 @@ public struct Level {
         self.levelSize = levelSize
         self.startingPosition = startingPosition
         self.faceLevels = faceLevels
-        self.withTileStates = withTileStates
         setTileState(levelPoint: startingPosition, tileState: .critical)
         initializeCriticalTiles()
     }
@@ -213,13 +209,9 @@ public struct Level {
                 if let slide = slideTile(originPoint: criticalTilePoint, originDirection: direction) {
                     if !slide.activatedTilePoints.isEmpty {
                         levelGraph.insertSlide(slide)
-                        if withTileStates {
-                            changeTileStateIfCurrent(levelPoints: slide.activatedTilePoints, current: .inactive, new: .active)
-                        }
+                        changeTileStateIfCurrent(levelPoints: slide.activatedTilePoints, current: .inactive, new: .active)
                         if !allCriticalTiles.contains(slide.destination) {
-                            if withTileStates {
-                                setTileState(levelPoint: slide.destination, tileState: .critical)
-                            }
+                            setTileState(levelPoint: slide.destination, tileState: .critical)
                             foundCriticalTilePoints.append(slide.destination)
                         }
                     }
@@ -380,5 +372,16 @@ extension Level {
             }
             return nil
         }    
+    }
+
+    public func emptyLevel() -> Level {
+        let inactiveTilePoints = tilePointsOfState(tileState: .inactive)
+        let activeTilePoints = tilePointsOfState(tileState: .active)
+        let criticalTilePoints = tilePointsOfState(tileState: .critical)
+        var emptyLevel = self
+        emptyLevel.setSpecialTileType(levelPoints: inactiveTilePoints, specialTileType: .wall)
+        emptyLevel.setTileState(levelPoints: activeTilePoints + criticalTilePoints, tileState: .inactive)
+        emptyLevel.setTileState(levelPoint: emptyLevel.startingPosition, tileState: .critical)
+        return emptyLevel
     }
 }
