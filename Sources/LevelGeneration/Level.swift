@@ -168,9 +168,7 @@ public struct Level {
         return [Direction]([.up, .down, .left, .right]).map { adjacentPoint(from: levelPoint, direction: $0) }
     }
 
-    public func slideCriticalTile(originPoint: LevelPoint, originDirection: Direction) -> Slide? {
-        precondition(faceLevels[originPoint.face.rawValue].tiles[originPoint.x][originPoint.y].tileState == .critical,
-                     "Tile state must be critical in order to slide.")
+    public func slideTile(originPoint: LevelPoint, originDirection: Direction) -> Slide? {
         var previous = originPoint
         var (destination, direction) = adjacentPoint(from: previous, direction: originDirection)
         var activatedTilePoints = [LevelPoint]()
@@ -212,7 +210,7 @@ public struct Level {
         var foundCriticalTilePoints = [LevelPoint]()
         for criticalTilePoint in criticalTilePoints ?? allCriticalTiles {            
             for direction in [Direction]([.up, .down, .left, .right]) {
-                if let slide = slideCriticalTile(originPoint: criticalTilePoint, originDirection: direction) {
+                if let slide = slideTile(originPoint: criticalTilePoint, originDirection: direction) {
                     if !slide.activatedTilePoints.isEmpty {
                         levelGraph.insertSlide(slide)
                         if withTileStates {
