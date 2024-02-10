@@ -164,7 +164,7 @@ public struct Level {
         return [Direction]([.up, .down, .left, .right]).map { adjacentPoint(from: levelPoint, direction: $0) }
     }
 
-    public func slideTile(originPoint: LevelPoint, originDirection: Direction) -> Slide? {
+    public mutating func slideTile(originPoint: LevelPoint, originDirection: Direction) -> Slide? {
         var previous = originPoint
         var (destination, direction) = adjacentPoint(from: previous, direction: originDirection)
         var activatedTilePoints = [LevelPoint]()
@@ -198,6 +198,8 @@ public struct Level {
                 fatalError("Unexpectedly found wall at destination")
             }
         }
+        changeTileStateIfCurrent(levelPoints: activatedTilePoints, current: .inactive, new: .active)
+        setTileState(levelPoint: destination, tileState: .critical)
         return Slide(origin: originPoint, destination: previous, activatedTilePoints: activatedTilePoints)
     }
 
@@ -209,9 +211,7 @@ public struct Level {
                 if let slide = slideTile(originPoint: criticalTilePoint, originDirection: direction) {
                     if !slide.activatedTilePoints.isEmpty {
                         levelGraph.insertSlide(slide)
-                        changeTileStateIfCurrent(levelPoints: slide.activatedTilePoints, current: .inactive, new: .active)
                         if !allCriticalTiles.contains(slide.destination) {
-                            setTileState(levelPoint: slide.destination, tileState: .critical)
                             foundCriticalTilePoints.append(slide.destination)
                         }
                     }
