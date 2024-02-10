@@ -22,7 +22,7 @@ public struct Level {
         initializeCriticalTiles()
     }
 
-    public init?(faceLevels: [FaceLevel], startingPosition: LevelPoint) {
+    public init?(faceLevels: [FaceLevel], startingPosition: LevelPoint, withTileStates: Bool = true) {
         // Face levels must appear in cube face order
         guard faceLevels.map({$0.face}) == Face.allCases else {
             return nil
@@ -69,6 +69,7 @@ public struct Level {
         self.levelSize = levelSize
         self.startingPosition = startingPosition
         self.faceLevels = faceLevels
+        self.withTileStates = withTileStates
         setTileState(levelPoint: startingPosition, tileState: .critical)
         initializeCriticalTiles()
     }
