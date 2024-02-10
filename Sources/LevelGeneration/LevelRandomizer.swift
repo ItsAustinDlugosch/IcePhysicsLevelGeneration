@@ -69,7 +69,7 @@ public class LevelRandomizer {
                 // Find this desitination and add walls that will create a slide(s) that integrate it into the graph
                 let isolatedSlides = complexLevel.levelGraph.isolatedSlides()
                 print("Isolated count: \(isolatedSlides.count)")
-                isolatedSlides.forEach { print($0.destination) }
+                isolatedSlides.forEach { print($0.destinationPoint) }
             }
             makeSolvableLevel()
             levels.append(complexLevel)

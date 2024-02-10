@@ -180,7 +180,7 @@ public struct Level {
                 (destination, direction) = adjacentPoint(from: destination, direction: direction)
             case .directionShift(let directionPair):
                 guard let shiftedDirection = directionPair.shiftDirection(direction) else {
-                    return Slide(origin: originPoint, destination: previous, activatedTilePoints: activatedTilePoints)
+                    return Slide(originPoint: originPoint, originDirection: originDirection, destinationPoint: previous, destinationDirection: direction, activatedTilePoints: activatedTilePoints)
                 }
                 previous = destination
                 activatedTilePoints.append(destination)            
@@ -198,7 +198,7 @@ public struct Level {
                 fatalError("Unexpectedly found wall at destination")
             }
         }
-        return Slide(origin: originPoint, destination: previous, activatedTilePoints: activatedTilePoints)
+        return Slide(originPoint: originPoint, originDirection: originDirection, destinationPoint: previous, destinationDirection: direction, activatedTilePoints: activatedTilePoints)
     }
 
     mutating func initializeCriticalTiles(criticalTilePoints: [LevelPoint]? = nil) {
@@ -210,9 +210,9 @@ public struct Level {
                     if !slide.activatedTilePoints.isEmpty {
                         changeTileStateIfCurrent(levelPoints: slide.activatedTilePoints, current: .inactive, new: .active)
                         levelGraph.insertSlide(slide)
-                        if !allCriticalTiles.contains(slide.destination) {
-                            setTileState(levelPoint: slide.destination, tileState: .critical)
-                            foundCriticalTilePoints.append(slide.destination)
+                        if !allCriticalTiles.contains(slide.destinationPoint) {
+                            setTileState(levelPoint: slide.destinationPoint, tileState: .critical)
+                            foundCriticalTilePoints.append(slide.destinationPoint)
                         }
                     }
                 }
