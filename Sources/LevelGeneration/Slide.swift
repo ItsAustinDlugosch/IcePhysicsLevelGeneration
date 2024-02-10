@@ -32,8 +32,7 @@ extension Slide: Hashable, Equatable {
         return lhs.originPoint == rhs.originPoint &&
           lhs.originDirection == rhs.originDirection &&
           lhs.destinationPoint == rhs.destinationPoint &&
-          lhs.destinationDirection == rhs.destinationDirection &&
-          lhs.activatedTilePoints == rhs.activatedTilePoints       
+          lhs.destinationDirection == rhs.destinationDirection
     }
 
     public func hash(into hasher: inout Hasher) {
@@ -41,6 +40,5 @@ extension Slide: Hashable, Equatable {
         hasher.combine(originDirection)
         hasher.combine(destinationPoint)
         hasher.combine(destinationDirection)
-        hasher.combine(activatedTilePoints)
     }
 }
