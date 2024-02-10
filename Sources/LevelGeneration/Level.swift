@@ -94,7 +94,7 @@ public struct Level {
         levelPoints.forEach { setSpecialTileType(levelPoint: $0, specialTileType: specialTileType) }
     }
 
-    func tilePointsOfState(tileState: TileState) -> [LevelPoint] {
+    public func tilePointsOfState(tileState: TileState) -> [LevelPoint] {
         return faceLevels.flatMap { $0.tilePointsOfState(tileState: tileState) }
     }
 
