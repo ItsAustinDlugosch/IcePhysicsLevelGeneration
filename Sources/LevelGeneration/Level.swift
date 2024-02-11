@@ -314,8 +314,6 @@ public struct Level {
             }
         }
         if foundCriticalTilePoints.count > 0 {
-            print(foundCriticalTilePoints)
-            print(foundCriticalTilePoints.count)
             initializeCriticalTiles(criticalTilePoints: foundCriticalTilePoints)
         }
     }
