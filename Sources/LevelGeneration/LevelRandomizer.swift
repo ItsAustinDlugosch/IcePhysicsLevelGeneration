@@ -18,7 +18,7 @@ public class LevelRandomizer {
             repeat {            
                 precondition(levels.count > 0, "There must be a level seed to randomize")
                 var complexLevel = levels[levels.count - 1]
-                let viableActiveGridPoints = Set(complexLevel.tilePointsOfState(tileState: .active)).subtracting(complexLevel.activeTilePointsAdjacentToCriticals())
+                let viableActiveGridPoints = Set(complexLevel.tilePointsOfState(tileStatus: .paintable)).subtracting(complexLevel.paintableTilePointsAdjacentToCriticals())
                 guard randomizeIterationCount < LevelRandomizer.randomizerIterationCap else {
                     break
                 }
@@ -39,7 +39,7 @@ public class LevelRandomizer {
             precondition(levels.count > 0, "There must be a level seed to randomize")
             var complexLevel = levels[levels.count - 1]
             let borderPoints = Set(complexLevel.faceLevels.flatMap { $0.borderPoints() })
-            let eligiblePoints = complexLevel.tilePointsOfState(tileState: .critical).filter {
+            let eligiblePoints = complexLevel.tilePointsOfState(tileStatus: .critical).filter {
                 let adjacentPoints = Set(complexLevel.adjacentStates(from: $0).map { $0.point })
                 // There must be an adjacent point that is also a border tile, sets must not be disjoint
                 if adjacentPoints.isDisjoint(with: borderPoints) {
@@ -59,9 +59,9 @@ public class LevelRandomizer {
             let wallState = adjacentStates.filter {
                 complexLevel.faceLevels[$0.point.face.rawValue].tiles[$0.point.x][$0.point.y].specialTileType == .wall
             }[0]
-            complexLevel.faceLevels[wallState.point.face.rawValue].tiles[wallState.point.x][wallState.point.y].tileState = .inactive
+            complexLevel.faceLevels[wallState.point.face.rawValue].tiles[wallState.point.x][wallState.point.y].tileStatus = .nonPaintable
             let secondAdjacentWallPoint = complexLevel.adjacentState(from: wallState).point
-            complexLevel.faceLevels[secondAdjacentWallPoint.face.rawValue].tiles[secondAdjacentWallPoint.x][secondAdjacentWallPoint.y].tileState = .inactive            
+            complexLevel.faceLevels[secondAdjacentWallPoint.face.rawValue].tiles[secondAdjacentWallPoint.x][secondAdjacentWallPoint.y].tileStatus = .nonPaintable            
             complexLevel.resetLevel()
 
             func makeSolvableLevel() {
@@ -69,7 +69,7 @@ public class LevelRandomizer {
                 // Find this desitination and add walls that will create a slide(s) that integrate it into the graph
                 let isolatedSlides = complexLevel.levelGraph.isolatedSlides()
                 print("Isolated count: \(isolatedSlides.count)")
-                isolatedSlides.forEach { print($0.destinationPlayerState.point) }
+                isolatedSlides.forEach { print($0.destination.point) }
             }
             makeSolvableLevel()
             levels.append(complexLevel)

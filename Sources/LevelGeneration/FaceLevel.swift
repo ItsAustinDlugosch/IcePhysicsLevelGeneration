@@ -14,7 +14,7 @@ public struct FaceLevel { // Represents one side of a level within our game
         for x in 0 ..< faceSize.maxX {
             var tileColumn = [Tile]()
             for y in 0 ..< faceSize.maxY {
-                tileColumn.append(Tile(point: LevelPoint(face: face, x: x, y: y), tileState: .inactive))
+                tileColumn.append(Tile(point: LevelPoint(face: face, x: x, y: y), tileStatus: .nonPaintable))
             }
             tiles.append(tileColumn)
         }
@@ -73,21 +73,21 @@ public struct FaceLevel { // Represents one side of a level within our game
     }
 
     // Initializing function that is used to set the state of one or multiple tiles
-    public mutating func setTileState(levelPoint: LevelPoint, tileState: TileState) {
-        tiles[levelPoint.x][levelPoint.y].tileState = tileState
+    public mutating func setTileStatus(levelPoint: LevelPoint, tileStatus: TileStatus) {
+        tiles[levelPoint.x][levelPoint.y].tileStatus = tileStatus
     }
-    public mutating func setTileState<T: Collection>(levelPoints: T, tileState: TileState) where T.Element == LevelPoint {
-        levelPoints.forEach { setTileState(levelPoint: $0, tileState: tileState) }
+    public mutating func setTileStatus<T: Collection>(levelPoints: T, tileStatus: TileStatus) where T.Element == LevelPoint {
+        levelPoints.forEach { setTileStatus(levelPoint: $0, tileStatus: tileStatus) }
     }
     
     // Initializing function that is used to change the state of one or multiple tiles if they match a current tile state
-    public mutating func changeTileStateIfCurrent(levelPoint: LevelPoint, current currentTileState: TileState, new newTileState: TileState) {
-        if tiles[levelPoint.x][levelPoint.y].tileState == currentTileState {
-            tiles[levelPoint.x][levelPoint.y].tileState = newTileState
+    public mutating func changeTileStatusIfCurrent(levelPoint: LevelPoint, current currentTileStatus: TileStatus, new newTileStatus: TileStatus) {
+        if tiles[levelPoint.x][levelPoint.y].tileStatus == currentTileStatus {
+            tiles[levelPoint.x][levelPoint.y].tileStatus = newTileStatus
         }
     }
-    public mutating func changeTileStateIfCurrent<T: Collection>(levelPoints: T, current currentTileState: TileState, new newTileState: TileState) where T.Element == LevelPoint {
-        levelPoints.forEach { changeTileStateIfCurrent(levelPoint: $0, current: currentTileState, new: newTileState) }
+    public mutating func changeTileStatusIfCurrent<T: Collection>(levelPoints: T, current currentTileStatus: TileStatus, new newTileStatus: TileStatus) where T.Element == LevelPoint {
+        levelPoints.forEach { changeTileStatusIfCurrent(levelPoint: $0, current: currentTileStatus, new: newTileStatus) }
     }
 
     // Initializing function that is used to set the sepcialTileType of one or multiple tiles
@@ -99,11 +99,11 @@ public struct FaceLevel { // Represents one side of a level within our game
     }
     
     // Returns the points of all tiles with a tile state and type
-    public func tilePointsOfState(tileState: TileState) -> Set<LevelPoint> {
+    public func tilePointsOfState(tileStatus: TileStatus) -> Set<LevelPoint> {
         var tilePointsOfState = Set<LevelPoint>()
         for tileColumn in tiles {
             for tile in tileColumn {
-                if tiles[tile.point.x][tile.point.y].tileState == tileState {
+                if tiles[tile.point.x][tile.point.y].tileStatus == tileStatus {
                     tilePointsOfState.insert(tile.point)
                 }
             }
@@ -121,8 +121,8 @@ public struct FaceLevel { // Represents one side of a level within our game
         }
         return tilePointsOfType
     }
-    public func tilePointsOfStateAndType(tileState: TileState, specialTileType: SpecialTileType?) -> Set<LevelPoint> {
-        return tilePointsOfState(tileState: tileState).intersection(tilePointsOfType(specialTileType: specialTileType))
+    public func tilePointsOfStateAndType(tileStatus: TileStatus, specialTileType: SpecialTileType?) -> Set<LevelPoint> {
+        return tilePointsOfState(tileStatus: tileStatus).intersection(tilePointsOfType(specialTileType: specialTileType))
     }
 
 
@@ -148,10 +148,22 @@ public struct FaceLevel { // Represents one side of a level within our game
                 if let specialTileType = tiles[x][y].specialTileType {
                     descriptionRow.append(specialTileType.description)
                 } else {
-                    descriptionRow.append(tiles[x][y].tileState.description)
+                    descriptionRow.append(tiles[x][y].tileStatus.description)
                 }
             }
             print(descriptionRow)
         }
     }
-}    
+}
+extension FaceLevel: Equatable, Hashable {
+    public static func ==(lhs: FaceLevel, rhs: FaceLevel) -> Bool {
+        return lhs.face == rhs.face &&
+          lhs.faceSize == rhs.faceSize &&
+          lhs.tiles == rhs.tiles
+    }
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(face)
+        hasher.combine(faceSize)
+        hasher.combine(tiles)
+    }
+}

@@ -1,8 +1,9 @@
 public struct Level {
     public let levelSize: LevelSize
     public var startingPosition: LevelPoint
-
     public var faceLevels: [FaceLevel]
+
+    public var levelStates = [LevelState]()
     public var levelGraph = Graph()
     
     public init(levelSize: LevelSize, startingPosition: LevelPoint) {
@@ -15,7 +16,7 @@ public struct Level {
             faceLevels.append(FaceLevel(faceSize: levelSize.faceSize(face: face), face: face))
         }
         self.faceLevels = faceLevels
-        setTileState(levelPoint: startingPosition, tileState: .critical)
+        setTileStatus(levelPoint: startingPosition, tileStatus: .critical)
         initializeCriticalTiles()
     }
 
@@ -66,24 +67,24 @@ public struct Level {
         self.levelSize = levelSize
         self.startingPosition = startingPosition
         self.faceLevels = faceLevels
-        setTileState(levelPoint: startingPosition, tileState: .critical)
+        setTileStatus(levelPoint: startingPosition, tileStatus: .critical)
         initializeCriticalTiles()
     }
 
     // Used to set the state of one or multiple tiles
-    public mutating func setTileState(levelPoint: LevelPoint, tileState: TileState) {
-        faceLevels[levelPoint.face.rawValue].setTileState(levelPoint: levelPoint, tileState: tileState)
+    public mutating func setTileStatus(levelPoint: LevelPoint, tileStatus: TileStatus) {
+        faceLevels[levelPoint.face.rawValue].setTileStatus(levelPoint: levelPoint, tileStatus: tileStatus)
     }
-    public mutating func setTileState<T: Collection>(levelPoints: T, tileState: TileState) where T.Element == LevelPoint {
-        levelPoints.forEach { setTileState(levelPoint: $0, tileState: tileState) }
+    public mutating func setTileStatus<T: Collection>(levelPoints: T, tileStatus: TileStatus) where T.Element == LevelPoint {
+        levelPoints.forEach { setTileStatus(levelPoint: $0, tileStatus: tileStatus) }
     }
 
     // Used to change the state of one or multiple tiles if they match a current tile state
-    public mutating func changeTileStateIfCurrent(levelPoint: LevelPoint, current currentTileState: TileState, new newTileState: TileState) {
-        faceLevels[levelPoint.face.rawValue].changeTileStateIfCurrent(levelPoint: levelPoint, current: currentTileState, new: newTileState)        
+    public mutating func changeTileStatusIfCurrent(levelPoint: LevelPoint, current currentTileStatus: TileStatus, new newTileStatus: TileStatus) {
+        faceLevels[levelPoint.face.rawValue].changeTileStatusIfCurrent(levelPoint: levelPoint, current: currentTileStatus, new: newTileStatus)        
     }
-    public mutating func changeTileStateIfCurrent<T: Collection>(levelPoints: T, current currentTileState: TileState, new newTileState: TileState)  where T.Element == LevelPoint {
-        levelPoints.forEach { changeTileStateIfCurrent(levelPoint: $0, current: currentTileState, new: newTileState) }   
+    public mutating func changeTileStatusIfCurrent<T: Collection>(levelPoints: T, current currentTileStatus: TileStatus, new newTileStatus: TileStatus)  where T.Element == LevelPoint {
+        levelPoints.forEach { changeTileStatusIfCurrent(levelPoint: $0, current: currentTileStatus, new: newTileStatus) }   
     }
 
     // Used to set the SpecialTileType of one or multiple tiles
@@ -94,14 +95,14 @@ public struct Level {
         levelPoints.forEach { setSpecialTileType(levelPoint: $0, specialTileType: specialTileType) }
     }
 
-    public func tilePointsOfState(tileState: TileState) -> Set<LevelPoint> {
-        return faceLevels.reduce(Set<LevelPoint>(), { $0.union($1.tilePointsOfState(tileState: tileState)) })
+    public func tilePointsOfState(tileStatus: TileStatus) -> Set<LevelPoint> {
+        return faceLevels.reduce(Set<LevelPoint>(), { $0.union($1.tilePointsOfState(tileStatus: tileStatus)) })
     }
     public func tilePointsOfType(specialTileType: SpecialTileType?) -> Set<LevelPoint> {
         return faceLevels.reduce(Set<LevelPoint>(), { $0.union($1.tilePointsOfType(specialTileType: specialTileType)) })
     }
-    public func tilePointsOfStateAndType(tileState: TileState, specialTileType: SpecialTileType?) -> Set<LevelPoint> {
-        return faceLevels.reduce(Set<LevelPoint>(), { $0.union($1.tilePointsOfStateAndType(tileState: tileState, specialTileType: specialTileType)) })
+    public func tilePointsOfStateAndType(tileStatus: TileStatus, specialTileType: SpecialTileType?) -> Set<LevelPoint> {
+        return faceLevels.reduce(Set<LevelPoint>(), { $0.union($1.tilePointsOfStateAndType(tileStatus: tileStatus, specialTileType: specialTileType)) })
     }
 
     static let crossEdgeMap: [Edge:(Face, Direction, [EdgeTransformation])] = [
@@ -131,83 +132,83 @@ public struct Level {
       Edge(.bottom, .left):(.left, .right, [.invertDeltaY, .minX]),
     ]
 
-    public func adjacentState(from originPlayerState: PlayerState) -> PlayerState {
-        func handleEdge() -> PlayerState {
+    public func adjacentState(from origin: SlideState) -> SlideState {
+        func handleEdge() -> SlideState {
             guard let (destinationFace,
                        destinationDirection,
-                       transformations) = Level.crossEdgeMap[Edge(originPlayerState.point.face, originPlayerState.direction)] else {
+                       transformations) = Level.crossEdgeMap[Edge(origin.point.face, origin.direction)] else {
                 fatalError("Unexpected edge transformation.")
             }
-            let newPoint = transformations.reduce(originPlayerState.point,
+            let newPoint = transformations.reduce(origin.point,
                                                   { return $1.transform(levelSize: levelSize, newFace: destinationFace, point: $0) })
-            return PlayerState(point: newPoint, direction: destinationDirection)
+            return SlideState(point: newPoint, direction: destinationDirection)
         }
 
-        let faceSize = levelSize.faceSize(face: originPlayerState.point.face)
-        switch originPlayerState.direction {
+        let faceSize = levelSize.faceSize(face: origin.point.face)
+        switch origin.direction {
         case .up:
-            if originPlayerState.point.y - 1 < 0 {
+            if origin.point.y - 1 < 0 {
                 return handleEdge()
             }
-            return PlayerState(point: LevelPoint(face: originPlayerState.point.face,
-                                                 x: originPlayerState.point.x,
-                                                 y: originPlayerState.point.y - 1),
-                               direction: originPlayerState.direction)
+            return SlideState(point: LevelPoint(face: origin.point.face,
+                                                 x: origin.point.x,
+                                                 y: origin.point.y - 1),
+                               direction: origin.direction)
         case .down:
-            if originPlayerState.point.y + 1 >= faceSize.maxY {
+            if origin.point.y + 1 >= faceSize.maxY {
                 return handleEdge()
             }
-            return PlayerState(point: LevelPoint(face: originPlayerState.point.face,
-                                                 x: originPlayerState.point.x,
-                                                 y: originPlayerState.point.y + 1),
-                               direction: originPlayerState.direction)
+            return SlideState(point: LevelPoint(face: origin.point.face,
+                                                 x: origin.point.x,
+                                                 y: origin.point.y + 1),
+                               direction: origin.direction)
         case .left:
-            if originPlayerState.point.x - 1 < 0 {
+            if origin.point.x - 1 < 0 {
                 return handleEdge()
             }
-            return PlayerState(point: LevelPoint(face: originPlayerState.point.face,
-                                                 x: originPlayerState.point.x - 1,
-                                                 y: originPlayerState.point.y),
-                               direction: originPlayerState.direction)
+            return SlideState(point: LevelPoint(face: origin.point.face,
+                                                 x: origin.point.x - 1,
+                                                 y: origin.point.y),
+                               direction: origin.direction)
         case .right:
-            if originPlayerState.point.x + 1 >= faceSize.maxX {
+            if origin.point.x + 1 >= faceSize.maxX {
                 return handleEdge()
             }
-            return PlayerState(point: LevelPoint(face: originPlayerState.point.face,
-                                                 x: originPlayerState.point.x + 1,
-                                                 y: originPlayerState.point.y),                               
-                               direction: originPlayerState.direction)            
+            return SlideState(point: LevelPoint(face: origin.point.face,
+                                                 x: origin.point.x + 1,
+                                                 y: origin.point.y),                               
+                               direction: origin.direction)            
         }
     }
 
-    public func adjacentStates(from levelPoint: LevelPoint) -> [PlayerState] {
-        return [Direction]([.up, .down, .left, .right]).map { adjacentState(from: PlayerState(point: levelPoint, direction: $0)) }
+    public func adjacentStates(from levelPoint: LevelPoint) -> [SlideState] {
+        return [Direction]([.up, .down, .left, .right]).map { adjacentState(from: SlideState(point: levelPoint, direction: $0)) }
     }
 
     // Recursively finds ajacentTiles in a direction until SpecialTiles stop the Player
-    public func slideTile(originPlayerState: PlayerState,
-                          currentPlayerState: PlayerState? = nil,
-                          intermediatePlayerStates: [PlayerState] = []) -> Slide? {
+    public func slideTile(origin: SlideState,
+                          currentSlideState: SlideState? = nil,
+                          intermediates: [SlideState] = []) -> Slide? {
 
-        guard originPlayerState != currentPlayerState else {
+        guard origin != currentSlideState else {
             // If the current player state is the same as the origin, there must be an infite loop and the slide does not exist
             return nil
         }
         
-        let start = currentPlayerState == nil
-        let currentPlayerState = currentPlayerState ?? originPlayerState
-        let adjacentPlayerState = adjacentState(from: currentPlayerState)
-        var intermediatePlayerStates = intermediatePlayerStates
+        let start = currentSlideState == nil
+        let currentSlideState = currentSlideState ?? origin
+        let adjacentSlideState = adjacentState(from: currentSlideState)
+        var intermediates = intermediates
 
-        let specialTileType = faceLevels[adjacentPlayerState.point.face.rawValue].tiles[adjacentPlayerState.point.x][adjacentPlayerState.point.y].specialTileType
-        // If the adjacent specialTileType is not a wall, player will move forward meaning the current is appended to intermediatePlayerStates
+        let specialTileType = faceLevels[adjacentSlideState.point.face.rawValue].tiles[adjacentSlideState.point.x][adjacentSlideState.point.y].specialTileType
+        // If the adjacent specialTileType is not a wall, player will move forward meaning the current is appended to intermediates
         if specialTileType != .wall && !start {
-            intermediatePlayerStates.append(currentPlayerState)
+            intermediates.append(currentSlideState)
         }
         if specialTileType == nil { // No Special Tiles to Process, Slide Normally            
-            return slideTile(originPlayerState: originPlayerState,
-                             currentPlayerState: adjacentPlayerState,
-                             intermediatePlayerStates: intermediatePlayerStates)
+            return slideTile(origin: origin,
+                             currentSlideState: adjacentSlideState,
+                             intermediates: intermediates)
         }
         switch specialTileType! {
         case .portal(let portalExit):
@@ -215,99 +216,56 @@ public struct Level {
             // because if these portals came in pairs, the player would be infinitely teleported
                 
             // Always append the Adjacent State when on a portal
-            intermediatePlayerStates.append(adjacentPlayerState)
-            return slideTile(originPlayerState: originPlayerState,
-                      currentPlayerState: PlayerState(point: portalExit,
-                                                      direction: adjacentPlayerState.direction),
-                      intermediatePlayerStates: intermediatePlayerStates)            
+            intermediates.append(adjacentSlideState)
+            return slideTile(origin: origin,
+                      currentSlideState: SlideState(point: portalExit,
+                                                      direction: adjacentSlideState.direction),
+                      intermediates: intermediates)            
         case .directionShift(let directionPair):
-            guard let shiftedDirection = directionPair.shiftDirection(adjacentPlayerState.direction) else {
+            guard let shiftedDirection = directionPair.shiftDirection(adjacentSlideState.direction) else {
                 // If a nil value was returned, the DirectionShift tile acts as a wall
                 fallthrough
             }
-            // Continue Recursing, if its not the start of the slide, add the currentPlayerState to the intermediatePlayerStates            
-            return slideTile(originPlayerState: originPlayerState,
-                      currentPlayerState: PlayerState(point: adjacentPlayerState.point,
+            // Continue Recursing, if its not the start of the slide, add the currentSlideState to the intermediates            
+            return slideTile(origin: origin,
+                      currentSlideState: SlideState(point: adjacentSlideState.point,
                                                       direction: shiftedDirection),
-                      intermediatePlayerStates: intermediatePlayerStates)            
+                      intermediates: intermediates)            
         case .wall: // Stops player at previous state
             // A player cannot stop/land on a portal tile, this means that if a portal's adjacent point is a wall,
             // the player would travel back through the portal in the opposite direction
-            if case .portal(let portalExit) = faceLevels[currentPlayerState.point.face.rawValue].tiles[currentPlayerState.point.x][currentPlayerState.point.y].specialTileType {
-                // Append the CurrentPlayerState in both directions to IntermediatePlayerStates
-                intermediatePlayerStates.append(currentPlayerState)
-                intermediatePlayerStates.append(PlayerState(point: currentPlayerState.point,
-                                                            direction: currentPlayerState.direction.toggle()))
-                return slideTile(originPlayerState: originPlayerState,
-                          currentPlayerState: PlayerState(point: portalExit,
-                                                          direction: currentPlayerState.direction.toggle()),
-                          intermediatePlayerStates: intermediatePlayerStates)
+            if case .portal(let portalExit) = faceLevels[currentSlideState.point.face.rawValue].tiles[currentSlideState.point.x][currentSlideState.point.y].specialTileType {
+                // Append the CurrentSlideState in both directions to IntermediateSlideStates
+                intermediates.append(currentSlideState)
+                intermediates.append(SlideState(point: currentSlideState.point,
+                                                            direction: currentSlideState.direction.toggle()))
+                return slideTile(origin: origin,
+                          currentSlideState: SlideState(point: portalExit,
+                                                          direction: currentSlideState.direction.toggle()),
+                          intermediates: intermediates)
                 }
-            return Slide(originPlayerState: originPlayerState,
-                         destinationPlayerState: currentPlayerState,
-                         intermediatePlayerState: intermediatePlayerStates)
+            return Slide(origin: origin,
+                         destination: currentSlideState,
+                         intermediates: intermediates)
         case .sticky: // Stops player at current state
-            return Slide(originPlayerState: originPlayerState,
-                         destinationPlayerState: adjacentPlayerState,
-                         intermediatePlayerState: intermediatePlayerStates + [currentPlayerState])
+            return Slide(origin: origin,
+                         destination: adjacentSlideState,
+                         intermediates: intermediates + [currentSlideState])
         }
     }
-    /*
-        while faceLevels[destination.face.rawValue].tiles[destination.x][destination.y].specialTileType != .wall {
-            guard originPoint != destination || originDirection != direction else {
-                // When special tiles that change the state of the grid are added
-                return nil
-            }
-            switch faceLevels[destination.face.rawValue].tiles[destination.x][destination.y].specialTileType {
-            case nil:
-                previous = destination
-                activatedTilePoints.append(destination)            
-                (destination, direction) = adjacentPoint(from: destination, direction: direction)
-            case .directionShift(let directionPair):
-                guard let shiftedDirection = directionPair.shiftDirection(direction) else {
-                    return Slide(originPlayerState: PlayerState(point: originPoint, direction: originDirection),
-                                 destinationPlayerState: PlayerState(point: previous, direction: direction),
-                                 activatedTilePoints: activatedTilePoints)
-                }
-                previous = destination
-                activatedTilePoints.append(destination)            
-                (destination, direction) = adjacentPoint(from: destination, direction: shiftedDirection)
-            case .portal(let portalExit):
-                previous = destination
-                activatedTilePoints.append(destination)
-                activatedTilePoints.append(portalExit)            
-                (destination, direction) = adjacentPoint(from: portalExit, direction: direction)
-                // Portal logic, when stopping on a portal, go backwards through portal in opposite direction
-                if case .wall = faceLevels[destination.face.rawValue].tiles[destination.x][destination.y].specialTileType,
-                   case .portal(let newPortalExit) = faceLevels[previous.face.rawValue].tiles[previous.x][previous.y].specialTileType {
-                    (destination, direction) = adjacentPoint(from: newPortalExit, direction: direction.toggle())                    
-                }
-                   case .sticky:
-                       return Slide(originPlayerState: PlayerState(point: originPoint, direction: originDirection),
-                                    destinationPlayerState: PlayerState(point: destination, direction: direction),
-                                    activatedTilePoints: activatedTilePoints)
-            default:
-                fatalError("Unexpectedly found wall at destination")
-            }
-        }
-        return Slide(originPlayerState: PlayerState(point: originPoint, direction: originDirection),
-                     destinationPlayerState: PlayerState(point: previous, direction: direction),
-                     activatedTilePoints: activatedTilePoints)
-                     
-     */    
-
+    
     mutating func initializeCriticalTiles(criticalTilePoints: Set<LevelPoint>? = nil) {
-        let allCriticalTiles = tilePointsOfState(tileState: .critical)
+        let allCriticalTiles = tilePointsOfState(tileStatus: .critical)
         var foundCriticalTilePoints = Set<LevelPoint>()
         for criticalTilePoint in criticalTilePoints ?? allCriticalTiles {            
             for direction in [Direction]([.up, .down, .left, .right]) {
-                if let slide = slideTile(originPlayerState: PlayerState(point: criticalTilePoint, direction: direction)) {
-                    if !slide.intermediatePlayerStates.isEmpty || slide.originPlayerState.point != slide.destinationPlayerState.point {
-                        changeTileStateIfCurrent(levelPoints: slide.intermediatePlayerStates.map { $0.point }, current: .inactive, new: .active)
+                if let slide = slideTile(origin: SlideState(point: criticalTilePoint, direction: direction)) {
+                    if !slide.intermediates.isEmpty || slide.origin.point != slide.destination.point {
+                        changeTileStatusIfCurrent(levelPoints: slide.intermediates.map { $0.point }, current: .nonPaintable, new: .paintable)
                         levelGraph.insertSlide(slide)
-                        if !allCriticalTiles.contains(slide.destinationPlayerState.point) {
-                            setTileState(levelPoint: slide.destinationPlayerState.point, tileState: .critical)
-                            foundCriticalTilePoints.insert(slide.destinationPlayerState.point)
+                        if !allCriticalTiles.contains(slide.destination.point) {
+                            setTileStatus(levelPoint: slide.destination.point, tileStatus: .critical)
+                            foundCriticalTilePoints.insert(slide.destination.point)
                         }
                     }
                 }
@@ -318,12 +276,12 @@ public struct Level {
         }
     }
 
-    public func activeTilePointsAdjacentToCriticals() -> [LevelPoint] {
-        let activeTilePoints = tilePointsOfState(tileState: .active)
-        return activeTilePoints.filter {
+    public func paintableTilePointsAdjacentToCriticals() -> [LevelPoint] {
+        let paintableTilePoints = tilePointsOfState(tileStatus: .paintable)
+        return paintableTilePoints.filter {
             for direction in [Direction]([.up, .down, .left, .right]) {
-                let adjacentPoint = adjacentState(from: PlayerState(point: $0, direction: direction)).point
-                if faceLevels[adjacentPoint.face.rawValue].tiles[adjacentPoint.x][adjacentPoint.y].tileState == .critical {
+                let adjacentPoint = adjacentState(from: SlideState(point: $0, direction: direction)).point
+                if faceLevels[adjacentPoint.face.rawValue].tiles[adjacentPoint.x][adjacentPoint.y].tileStatus == .critical {
                     return true
                 }
             }
@@ -333,17 +291,17 @@ public struct Level {
 
         // Resets the level to be revalidated
     public mutating func resetLevel() {
-        tilePointsOfState(tileState: .active).forEach { setTileState(levelPoint: $0, tileState: .inactive) }
-        tilePointsOfState(tileState: .critical).forEach { setTileState(levelPoint: $0, tileState: .inactive) }
+        tilePointsOfState(tileStatus: .paintable).forEach { setTileStatus(levelPoint: $0, tileStatus: .nonPaintable) }
+        tilePointsOfState(tileStatus: .critical).forEach { setTileStatus(levelPoint: $0, tileStatus: .nonPaintable) }
         levelGraph.clearGraph()
-        setTileState(levelPoint: startingPosition, tileState: .critical)
+        setTileStatus(levelPoint: startingPosition, tileStatus: .critical)
         initializeCriticalTiles()
     }
     
 
     // Checks if a level grid is solvable by ensuring that every critical point has a path to the starting position    
     public func solvable() -> Bool {
-        for criticalTileGridPoint in tilePointsOfState(tileState: .critical) {
+        for criticalTileGridPoint in tilePointsOfState(tileStatus: .critical) {
             if levelGraph.breadthFirstSearch(origin: criticalTileGridPoint, destination: startingPosition) == nil {
                 return false
             }
@@ -351,16 +309,10 @@ public struct Level {
         return true
     }
 
-    public func printLevel() {
-        for face in [Face]([.back, .left, .top, .right, .front, .bottom]) {
-            print(face)
-            faceLevels[face.rawValue].printFaceLevel()
-        }              
-    }
 }
 
 extension Level: Codable {
-    static let version = "1.1.0"
+    static let version = "2.0.0"
     
     private enum CodingKeys: String, CodingKey {
         case version
@@ -380,9 +332,9 @@ extension Level: Codable {
             faceLevels.map { faceLevel in
                 faceLevel.tiles.map { tileColumn in
                     tileColumn.map { tile in
-                        let tileState = tile.tileState
+                        let tileStatus = tile.tileStatus
                         let specialTileType = tile.specialTileType                        
-                        if tileState == .inactive && specialTileType == nil || specialTileType == .wall {
+                        if tileStatus == .nonPaintable && specialTileType == nil || specialTileType == .wall {
                             return 1
                         }
                         if case .directionShift(let directionPair) = specialTileType {
@@ -406,7 +358,7 @@ extension Level: Codable {
         try container.encode(portalTileData, forKey: .portalTileData)
     }
 
-    static let supportedVersions = ["1.0.0", "1.1.0"]
+    static let supportedVersions = ["1.0.0", "1.1.0", "2.0.0"]
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -473,13 +425,13 @@ extension Level {
     }
 
     public func emptyLevel() -> Level {
-        let inactiveTilePoints = tilePointsOfState(tileState: .inactive)
-        let activeTilePoints = tilePointsOfState(tileState: .active)
-        let criticalTilePoints = tilePointsOfState(tileState: .critical)
+        let inactiveTilePoints = tilePointsOfState(tileStatus: .nonPaintable)
+        let activeTilePoints = tilePointsOfState(tileStatus: .paintable)
+        let criticalTilePoints = tilePointsOfState(tileStatus: .critical)
         var emptyLevel = self
         emptyLevel.setSpecialTileType(levelPoints: inactiveTilePoints, specialTileType: .wall)
-        emptyLevel.setTileState(levelPoints: activeTilePoints.union(criticalTilePoints), tileState: .inactive)
-        emptyLevel.setTileState(levelPoint: emptyLevel.startingPosition, tileState: .critical)
+        emptyLevel.setTileStatus(levelPoints: activeTilePoints.union(criticalTilePoints), tileStatus: .nonPaintable)
+        emptyLevel.setTileStatus(levelPoint: emptyLevel.startingPosition, tileStatus: .critical)
         return emptyLevel
     }
 }

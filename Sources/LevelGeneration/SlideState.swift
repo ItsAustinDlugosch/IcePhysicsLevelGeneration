@@ -1,4 +1,4 @@
-public struct PlayerState { // Represents the state of a player when starting, during, and ending a Slide
+public struct SlideState { // Represents the state of a slide
     public let point: LevelPoint
     public let direction: Direction
 
@@ -8,8 +8,8 @@ public struct PlayerState { // Represents the state of a player when starting, d
     }
 }
 
-extension PlayerState: Equatable, Hashable {
-    public static func ==(lhs: PlayerState, rhs: PlayerState) -> Bool {
+extension SlideState: Equatable, Hashable {
+    public static func ==(lhs: SlideState, rhs: SlideState) -> Bool {
         return lhs.point == rhs.point &&
           lhs.direction == rhs.direction
     }
