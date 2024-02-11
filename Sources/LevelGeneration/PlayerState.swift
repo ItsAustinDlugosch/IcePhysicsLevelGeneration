@@ -1,6 +1,11 @@
 public struct PlayerState { // Represents the state of a player when starting, during, and ending a Slide
     public let point: LevelPoint
     public let direction: Direction
+
+    public init(point: LevelPoint, direction: Direction) {
+        self.point = point
+        self.direction = direction
+    }
 }
 
 extension PlayerState: Equatable, Hashable {
