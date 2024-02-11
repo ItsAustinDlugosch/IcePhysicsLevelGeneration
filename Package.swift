@@ -14,5 +14,7 @@ let package = Package(
         .target(
             name: "LevelGeneration",
             dependencies: []),
+        .testTarget(name: "LevelGenerationTests",
+                    dependencies: ["LevelGeneration"]),
     ]
 )

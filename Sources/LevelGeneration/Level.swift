@@ -125,49 +125,128 @@ public struct Level {
       Edge(.bottom, .left):(.left, .right, [.invertDeltaY, .minX]),
     ]
 
-    public func adjacentPoint(from origin: LevelPoint, direction: Direction) -> (adjacentPoint: LevelPoint, direction: Direction) {        
-        func handleEdge() -> (LevelPoint, Direction) {
-            guard let (face, direction, transformations) = Level.crossEdgeMap[Edge(origin.face, direction)] else {
+    public func adjacentState(from originPlayerState: PlayerState) -> PlayerState {
+        func handleEdge() -> PlayerState {
+            guard let (destinationFace,
+                       destinationDirection,
+                       transformations) = Level.crossEdgeMap[Edge(originPlayerState.point.face, originPlayerState.direction)] else {
                 fatalError("Unexpected edge transformation.")
             }
-            return (transformations.reduce(origin, { (point: LevelPoint, transformation: EdgeTransformation) -> LevelPoint in
-                                                           return transformation.transform(levelSize: levelSize, newFace: face, point: point)
-                                                        }), direction)
+            let newPoint = transformations.reduce(originPlayerState.point,
+                                                  { return $1.transform(levelSize: levelSize, newFace: destinationFace, point: $0) })
+            return PlayerState(point: newPoint, direction: destinationDirection)
         }
 
-        let faceSize = levelSize.faceSize(face: origin.face)
-        switch direction {
+        let faceSize = levelSize.faceSize(face: originPlayerState.point.face)
+        switch originPlayerState.direction {
         case .up:
-            if origin.y - 1 < 0 { // Transform
+            if originPlayerState.point.y - 1 < 0 {
                 return handleEdge()
             }
-            return (LevelPoint(face: origin.face, x: origin.x, y: origin.y - 1), direction)
+            return PlayerState(point: LevelPoint(face: originPlayerState.point.face,
+                                                 x: originPlayerState.point.x,
+                                                 y: originPlayerState.point.y - 1),
+                               direction: originPlayerState.direction)
         case .down:
-            if origin.y + 1 >= faceSize.maxY { // Another face
+            if originPlayerState.point.y + 1 >= faceSize.maxY {
                 return handleEdge()
             }
-            return (LevelPoint(face: origin.face, x: origin.x, y: origin.y + 1), direction)
+            return PlayerState(point: LevelPoint(face: originPlayerState.point.face,
+                                                 x: originPlayerState.point.x,
+                                                 y: originPlayerState.point.y + 1),
+                               direction: originPlayerState.direction)
         case .left:
-            if origin.x - 1 < 0 { // Another face
+            if originPlayerState.point.x - 1 < 0 {
                 return handleEdge()
             }
-            return (LevelPoint(face: origin.face, x: origin.x - 1, y: origin.y), direction)
+            return PlayerState(point: LevelPoint(face: originPlayerState.point.face,
+                                                 x: originPlayerState.point.x - 1,
+                                                 y: originPlayerState.point.y),
+                               direction: originPlayerState.direction)
         case .right:
-            if origin.x + 1 >= faceSize.maxX {
+            if originPlayerState.point.x + 1 >= faceSize.maxX {
                 return handleEdge()
             }
-            return (LevelPoint(face: origin.face, x: origin.x + 1, y: origin.y), direction)
+            return PlayerState(point: LevelPoint(face: originPlayerState.point.face,
+                                                 x: originPlayerState.point.x + 1,
+                                                 y: originPlayerState.point.y),                               
+                               direction: originPlayerState.direction)            
         }
     }
 
-    public func adjacentPoints(levelPoint: LevelPoint) -> [(adjacentPoint: LevelPoint, direction: Direction)] {
-        return [Direction]([.up, .down, .left, .right]).map { adjacentPoint(from: levelPoint, direction: $0) }
+    public func adjacentStates(from levelPoint: LevelPoint) -> [PlayerState] {
+        return [Direction]([.up, .down, .left, .right]).map { adjacentState(from: PlayerState(point: levelPoint, direction: $0)) }
     }
 
-    public mutating func slideTile(originPoint: LevelPoint, originDirection: Direction) -> Slide? {
-        var previous = originPoint
-        var (destination, direction) = adjacentPoint(from: previous, direction: originDirection)
-        var activatedTilePoints = [LevelPoint]()
+    // Recursively finds ajacentTiles in a direction until SpecialTiles stop the Player
+    public func slideTile(originPlayerState: PlayerState,
+                          currentPlayerState: PlayerState? = nil,
+                          intermediatePlayerStates: [PlayerState] = []) -> Slide? {
+
+        guard originPlayerState != currentPlayerState else {
+            // If the current player state is the same as the origin, there must be an infite loop and the slide does not exist
+            return nil
+        }
+        
+        let start = currentPlayerState != nil
+        let currentPlayerState = currentPlayerState ?? originPlayerState
+        let adjacentPlayerState = adjacentState(from: currentPlayerState)
+        var intermediatePlayerStates = intermediatePlayerStates
+
+        let specialTileType = faceLevels[adjacentPlayerState.point.face.rawValue].tiles[adjacentPlayerState.point.x][adjacentPlayerState.point.y].specialTileType
+        // If the adjacent specialTileType is not a wall, player will move forward meaning the current is appended to intermediatePlayerStates
+        if specialTileType != .wall && !start {
+            intermediatePlayerStates.append(currentPlayerState)
+        }
+        if specialTileType == nil { // No Special Tiles to Process, Slide Normally            
+            return slideTile(originPlayerState: originPlayerState,
+                             currentPlayerState: adjacentPlayerState,
+                             intermediatePlayerStates: intermediatePlayerStates)
+        }
+        switch specialTileType! {
+        case .portal(let portalExit):
+            // When exiting a portal, the player must exit not on the exit but on its adjacent point
+            // because if these portals came in pairs, the player would be infinitely teleported
+                
+            // Always append the Adjacent State when on a portal
+            intermediatePlayerStates.append(adjacentPlayerState)
+            return slideTile(originPlayerState: originPlayerState,
+                      currentPlayerState: PlayerState(point: portalExit,
+                                                      direction: adjacentPlayerState.direction),
+                      intermediatePlayerStates: intermediatePlayerStates)            
+        case .directionShift(let directionPair):
+            guard let shiftedDirection = directionPair.shiftDirection(adjacentPlayerState.direction) else {
+                // If a nil value was returned, the DirectionShift tile acts as a wall
+                fallthrough
+            }
+            // Continue Recursing, if its not the start of the slide, add the currentPlayerState to the intermediatePlayerStates            
+            return slideTile(originPlayerState: originPlayerState,
+                      currentPlayerState: PlayerState(point: adjacentPlayerState.point,
+                                                      direction: shiftedDirection),
+                      intermediatePlayerStates: intermediatePlayerStates)            
+        case .wall: // Stops player at previous state
+            // A player cannot stop/land on a portal tile, this means that if a portal's adjacent point is a wall,
+            // the player would travel back through the portal in the opposite direction
+            if case .portal(let portalExit) = faceLevels[currentPlayerState.point.face.rawValue].tiles[currentPlayerState.point.x][currentPlayerState.point.y].specialTileType {
+                // Append the CurrentPlayerState in both directions to IntermediatePlayerStates
+                intermediatePlayerStates.append(currentPlayerState)
+                intermediatePlayerStates.append(PlayerState(point: currentPlayerState.point,
+                                                            direction: currentPlayerState.direction.toggle()))
+                return slideTile(originPlayerState: originPlayerState,
+                          currentPlayerState: PlayerState(point: portalExit,
+                                                          direction: currentPlayerState.direction.toggle()),
+                          intermediatePlayerStates: intermediatePlayerStates)
+                }
+            return Slide(originPlayerState: originPlayerState,
+                         destinationPlayerState: currentPlayerState,
+                         intermediatePlayerState: intermediatePlayerStates)
+        case .sticky: // Stops player at current state
+            return Slide(originPlayerState: originPlayerState,
+                         destinationPlayerState: adjacentPlayerState,
+                         intermediatePlayerState: intermediatePlayerStates + [currentPlayerState])
+        }
+    }
+    /*
         while faceLevels[destination.face.rawValue].tiles[destination.x][destination.y].specialTileType != .wall {
             guard originPoint != destination || originDirection != direction else {
                 // When special tiles that change the state of the grid are added
@@ -180,7 +259,9 @@ public struct Level {
                 (destination, direction) = adjacentPoint(from: destination, direction: direction)
             case .directionShift(let directionPair):
                 guard let shiftedDirection = directionPair.shiftDirection(direction) else {
-                    return Slide(originPoint: originPoint, originDirection: originDirection, destinationPoint: previous, destinationDirection: direction, activatedTilePoints: activatedTilePoints)
+                    return Slide(originPlayerState: PlayerState(point: originPoint, direction: originDirection),
+                                 destinationPlayerState: PlayerState(point: previous, direction: direction),
+                                 activatedTilePoints: activatedTilePoints)
                 }
                 previous = destination
                 activatedTilePoints.append(destination)            
@@ -196,27 +277,31 @@ public struct Level {
                     (destination, direction) = adjacentPoint(from: newPortalExit, direction: direction.toggle())                    
                 }
                    case .sticky:
-                       return Slide(originPoint: originPoint, originDirection: originDirection, destinationPoint: destination, destinationDirection: direction, activatedTilePoints: activatedTilePoints)
-                       
+                       return Slide(originPlayerState: PlayerState(point: originPoint, direction: originDirection),
+                                    destinationPlayerState: PlayerState(point: destination, direction: direction),
+                                    activatedTilePoints: activatedTilePoints)
             default:
                 fatalError("Unexpectedly found wall at destination")
             }
         }
-        return Slide(originPoint: originPoint, originDirection: originDirection, destinationPoint: previous, destinationDirection: direction, activatedTilePoints: activatedTilePoints)
-    }
+        return Slide(originPlayerState: PlayerState(point: originPoint, direction: originDirection),
+                     destinationPlayerState: PlayerState(point: previous, direction: direction),
+                     activatedTilePoints: activatedTilePoints)
+                     
+     */    
 
     mutating func initializeCriticalTiles(criticalTilePoints: [LevelPoint]? = nil) {
         let allCriticalTiles = tilePointsOfStateAndType(tileState: .critical)
         var foundCriticalTilePoints = [LevelPoint]()
         for criticalTilePoint in criticalTilePoints ?? allCriticalTiles {            
             for direction in [Direction]([.up, .down, .left, .right]) {
-                if let slide = slideTile(originPoint: criticalTilePoint, originDirection: direction) {
-                    if !slide.activatedTilePoints.isEmpty || slide.originPoint != slide.destinationPoint {
-                        changeTileStateIfCurrent(levelPoints: slide.activatedTilePoints, current: .inactive, new: .active)
+                if let slide = slideTile(originPlayerState: PlayerState(point: criticalTilePoint, direction: direction)) {
+                    if !slide.intermediatePlayerStates.isEmpty || slide.originPlayerState.point != slide.destinationPlayerState.point {
+                        changeTileStateIfCurrent(levelPoints: slide.intermediatePlayerStates.map { $0.point }, current: .inactive, new: .active)
                         levelGraph.insertSlide(slide)
-                        if !allCriticalTiles.contains(slide.destinationPoint) {
-                            setTileState(levelPoint: slide.destinationPoint, tileState: .critical)
-                            foundCriticalTilePoints.append(slide.destinationPoint)
+                        if !allCriticalTiles.contains(slide.destinationPlayerState.point) {
+                            setTileState(levelPoint: slide.destinationPlayerState.point, tileState: .critical)
+                            foundCriticalTilePoints.append(slide.destinationPlayerState.point)
                         }
                     }
                 }
@@ -231,7 +316,7 @@ public struct Level {
         let activeTilePoints = tilePointsOfStateAndType(tileState: .active)
         return activeTilePoints.filter {
             for direction in [Direction]([.up, .down, .left, .right]) {
-                let adjacentPoint = adjacentPoint(from: $0, direction: direction).adjacentPoint
+                let adjacentPoint = adjacentState(from: PlayerState(point: $0, direction: direction)).point
                 if faceLevels[adjacentPoint.face.rawValue].tiles[adjacentPoint.x][adjacentPoint.y].tileState == .critical {
                     return true
                 }
