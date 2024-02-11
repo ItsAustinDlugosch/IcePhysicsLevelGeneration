@@ -18,7 +18,7 @@ public class LevelRandomizer {
             repeat {            
                 precondition(levels.count > 0, "There must be a level seed to randomize")
                 var complexLevel = levels[levels.count - 1]
-                let viableActiveGridPoints = Set(complexLevel.tilePointsOfStateAndType(tileState: .active)).subtracting(complexLevel.activeTilePointsAdjacentToCriticals())
+                let viableActiveGridPoints = Set(complexLevel.tilePointsOfState(tileState: .active)).subtracting(complexLevel.activeTilePointsAdjacentToCriticals())
                 guard randomizeIterationCount < LevelRandomizer.randomizerIterationCap else {
                     break
                 }
@@ -39,7 +39,7 @@ public class LevelRandomizer {
             precondition(levels.count > 0, "There must be a level seed to randomize")
             var complexLevel = levels[levels.count - 1]
             let borderPoints = Set(complexLevel.faceLevels.flatMap { $0.borderPoints() })
-            let eligiblePoints = complexLevel.tilePointsOfStateAndType(tileState: .critical).filter {
+            let eligiblePoints = complexLevel.tilePointsOfState(tileState: .critical).filter {
                 let adjacentPoints = Set(complexLevel.adjacentStates(from: $0).map { $0.point })
                 // There must be an adjacent point that is also a border tile, sets must not be disjoint
                 if adjacentPoints.isDisjoint(with: borderPoints) {
