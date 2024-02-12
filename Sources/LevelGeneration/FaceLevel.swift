@@ -1,169 +1,78 @@
-import Foundation
+class FaceLevel {
+    let face: Face
+    let faceSize: FaceSize
+    
+    var tiles: [[Tile]]
 
-public struct FaceLevel { // Represents one side of a level within our game
-    public let faceSize: FaceSize
-    public let face: Face    
-
-    public var tiles: [[Tile]]
-    public init(faceSize: FaceSize, face: Face) {
-        self.faceSize = faceSize
+    init(face: Face, faceSize: FaceSize) {
         self.face = face
-
-        // Create the grid tiles and set their state as inactive by default
-        var tiles = [[Tile]]()
-        for x in 0 ..< faceSize.maxX {
-            var tileColumn = [Tile]()
-            for y in 0 ..< faceSize.maxY {
-                tileColumn.append(Tile(point: LevelPoint(face: face, x: x, y: y), tileStatus: .nonPaintable))
+        self.faceSize = faceSize
+        self.tiles = Array(repeating: Array(repeating: Tile(point: LevelPoint(face: face, x: 0, y: 0)), count: faceSize.maxY), count: faceSize.maxX)
+        
+        // Initialize tiles as basic nonPaintable tiles
+        for x in 0..<faceSize.maxX {
+            for y in 0..<faceSize.maxY {
+                self.tiles[x][y] = Tile(point: LevelPoint(face: face, x: x, y: y))
             }
-            tiles.append(tileColumn)
         }
-        self.tiles = tiles
-        setSpecialTileType(levelPoints: borderPoints(), specialTileType: .wall)
+        makeBordersWallTiles()
+        setupFaceTileAdjacency()
     }
 
-    public init?(intTiles: [[Int]], specialTileData: [LevelPoint: any SpecialTileTypeData], face: Face) {
-        func tilesToFaceSize<T>(_ grid: [[T]]) -> FaceSize? {
-            let maxY = grid.count
-            guard maxY != 0, let firstRow = grid.first else {
-                return nil
-            }
-            if grid.allSatisfy({ $0.count == firstRow.count }) {
-                return FaceSize(maxX: firstRow.count, maxY: maxY)
-            }
-            return nil
-        }
-
-        guard let faceSize = tilesToFaceSize(intTiles) else {
-            return nil
-        }
-        self.faceSize = faceSize
-        self.face = face
-        var tiles = [[Tile]]()
-        for x in 0 ..< intTiles.count {
-            var tileColumn = [Tile]()
-            for y in 0 ..< intTiles[x].count  {
-                let specialTileType: SpecialTileType?
-                switch intTiles[x][y] {
-                case 0:
-                    specialTileType = nil
-                case 1:
-                    specialTileType = .wall
-                case 2:
-                    guard let pair = specialTileData[LevelPoint(face: face, x: x, y: y)] as? DirectionPair else {
-                        fatalError("Expected associated value of DirectionPair at LevelPoint(face: \(face.rawValue), x: \(x), y: \(y)).")
-                    }
-                    specialTileType = .directionShift(pair: pair)
-                case 3:
-                    guard let destination = specialTileData[LevelPoint(face: face, x: x, y: y)] as? LevelPoint else {
-                        fatalError("Expected associated value of LevelPoint at LevelPoint(face: \(face.rawValue), x: \(x), y: \(y)).")
-                    }
-                    specialTileType = .portal(to: destination)
-                case 4:
-                    specialTileType = .sticky
-                default:
-                    print("Unexpected tile state: \(intTiles[x][y])")
-                    return nil
+    // Initializing Functions   
+    private func setupFaceTileAdjacency() { // Only sets up adjacency for tiles within the Face, edges are handled within the Level
+        for (x, column) in tiles.enumerated() {
+            for (y, tile) in column.enumerated() {
+                if y > 0 {
+                    tile.up = tiles[x][y - 1]
                 }
-                tileColumn.append(Tile(point: LevelPoint(face: face, x: x, y: y), specialTileType: specialTileType))
+                if y < column.count - 1 {
+                    tile.down = tiles[x][y + 1]
+                }
+                if x > 0 {
+                    tile.left = tiles[x - 1][y]
+                }
+                if x < tiles.count - 1 {
+                    tile.right = tiles[x + 1][y]
+                }
             }
-            tiles.append(tileColumn)
-        }        
-        self.tiles = tiles
-    }
-
-    // Initializing function that is used to set the state of one or multiple tiles
-    public mutating func setTileStatus(levelPoint: LevelPoint, tileStatus: TileStatus) {
-        tiles[levelPoint.x][levelPoint.y].tileStatus = tileStatus
-    }
-    public mutating func setTileStatus<T: Collection>(levelPoints: T, tileStatus: TileStatus) where T.Element == LevelPoint {
-        levelPoints.forEach { setTileStatus(levelPoint: $0, tileStatus: tileStatus) }
+        }
     }
     
-    // Initializing function that is used to change the state of one or multiple tiles if they match a current tile state
-    public mutating func changeTileStatusIfCurrent(levelPoint: LevelPoint, current currentTileStatus: TileStatus, new newTileStatus: TileStatus) {
-        if tiles[levelPoint.x][levelPoint.y].tileStatus == currentTileStatus {
-            tiles[levelPoint.x][levelPoint.y].tileStatus = newTileStatus
+    var topBorderTiles: [Tile] {
+        return tiles.map {
+            precondition($0.count > 0)
+            return $0.first!
         }
     }
-    public mutating func changeTileStatusIfCurrent<T: Collection>(levelPoints: T, current currentTileStatus: TileStatus, new newTileStatus: TileStatus) where T.Element == LevelPoint {
-        levelPoints.forEach { changeTileStatusIfCurrent(levelPoint: $0, current: currentTileStatus, new: newTileStatus) }
+    var bottomBorderTiles: [Tile] {
+        return tiles.map {
+            precondition($0.count > 0)
+            return $0.last!
+        }
     }
-
-    // Initializing function that is used to set the sepcialTileType of one or multiple tiles
-    public mutating func setSpecialTileType(levelPoint: LevelPoint, specialTileType: SpecialTileType?) {
-        tiles[levelPoint.x][levelPoint.y].specialTileType = specialTileType
+    var leftBorderTiles: [Tile] {
+        precondition(tiles.count > 0)
+        return tiles.first!
     }
-    public mutating func setSpecialTileType<T: Collection>(levelPoints: T, specialTileType: SpecialTileType?) where T.Element == LevelPoint {
-        levelPoints.forEach { setSpecialTileType(levelPoint: $0, specialTileType: specialTileType) }
+    var rightBorderTiles: [Tile] {
+        precondition(tiles.count > 0)
+        return tiles.last!
     }
     
-    // Returns the points of all tiles with a tile state and type
-    public func tilePointsOfState(tileStatus: TileStatus) -> Set<LevelPoint> {
-        var tilePointsOfState = Set<LevelPoint>()
-        for tileColumn in tiles {
-            for tile in tileColumn {
-                if tiles[tile.point.x][tile.point.y].tileStatus == tileStatus {
-                    tilePointsOfState.insert(tile.point)
-                }
-            }
+    private func makeBordersWallTiles() {
+        for tile in topBorderTiles + bottomBorderTiles + leftBorderTiles + rightBorderTiles {
+            self.tiles[tile.point.x][tile.point.y] = SpecialTile(point: tile.point, behavior: WallBehavior())
         }
-        return tilePointsOfState
-    }
-    public func tilePointsOfType(specialTileType: SpecialTileType?) -> Set<LevelPoint> {
-        var tilePointsOfType = Set<LevelPoint>()
-        for tileColumn in tiles {
-            for tile in tileColumn {
-                if tiles[tile.point.x][tile.point.y].specialTileType == specialTileType {
-                    tilePointsOfType.insert(tile.point)
-                }
-            }
-        }
-        return tilePointsOfType
-    }
-    public func tilePointsOfStateAndType(tileStatus: TileStatus, specialTileType: SpecialTileType?) -> Set<LevelPoint> {
-        return tilePointsOfState(tileStatus: tileStatus).intersection(tilePointsOfType(specialTileType: specialTileType))
     }
 
-
-    // Returns the points of tiles along the border of a face
-    public func borderPoints() -> [LevelPoint] {
-        var borderPoints = [LevelPoint]()
-        for tileColumn in tiles {
-            for tile in tileColumn {
-                if tile.point.x == 0 || tile.point.x == (faceSize.maxX - 1) ||
-                     tile.point.y == 0 || tile.point.y == (faceSize.maxY - 1) {
-                    borderPoints.append(tile.point)
-                }
-            }
-        }
-        return borderPoints
-    }    
-
-    // Prints the grid
-    public func printFaceLevel() {
+    func printFaceLevel() {     
         for y in 0 ..< faceSize.maxY {
             var descriptionRow = [String]()
             for x in 0 ..< faceSize.maxX {
-                if let specialTileType = tiles[x][y].specialTileType {
-                    descriptionRow.append(specialTileType.description)
-                } else {
-                    descriptionRow.append(tiles[x][y].tileStatus.description)
-                }
+                descriptionRow.append(tiles[x][y].description)
             }
             print(descriptionRow)
-        }
-    }
-}
-extension FaceLevel: Equatable, Hashable {
-    public static func ==(lhs: FaceLevel, rhs: FaceLevel) -> Bool {
-        return lhs.face == rhs.face &&
-          lhs.faceSize == rhs.faceSize &&
-          lhs.tiles == rhs.tiles
-    }
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(face)
-        hasher.combine(faceSize)
-        hasher.combine(tiles)
+        }            
     }
 }
