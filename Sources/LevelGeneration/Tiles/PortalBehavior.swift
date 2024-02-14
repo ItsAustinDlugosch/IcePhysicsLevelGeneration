@@ -1,4 +1,4 @@
-class PortalBehavior: TileBehavior {
+class PortalBehavior: Behavior {
     var destination: Tile
 
     init(destination: Tile) {
@@ -9,7 +9,8 @@ class PortalBehavior: TileBehavior {
         "Portal"
     }
 
-    func activate(by levelMovableObject: LevelMovableObject, in level: Level, context: ActivationContext, direction: Direction) {
+    func activate(in level: Level, by levelMovableObject: LevelMovableObject,
+                  context: ActivationContext, slideDirection: Direction?) {
         if case .slideOn = context {
             levelMovableObject.tile = destination
         }

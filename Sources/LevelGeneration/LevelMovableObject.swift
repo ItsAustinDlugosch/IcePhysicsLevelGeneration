@@ -1,17 +1,16 @@
-class LevelMovableObject: DynamicFeature {
+class LevelMovableObject: LevelObject, DynamicFeature {
     // Objects that conform can move within the level, returns whether the move was successful
-    var level: Level
-    var tile: Tile {
-        didSet {
-            updateState(in: level)
-        }
-    }
-    var slideDirection: Direction? = nil     
+    var tile: Tile
+    var slideDirection: Direction? = nil
 
-    init(level: Level, startingTile: Tile) {
-        self.level = level
+    init(level: Level, startingPosition: LevelPoint) {
+        guard let startingTile = level.getTile(at: startingPosition) else {
+            fatalError("Starting position does not lie on level.")
+        }
         self.tile = startingTile
+        super.init(level: level, position: startingPosition)
     }
+
     
     func slide(_ direction: Direction) {
 
@@ -31,36 +30,37 @@ class LevelMovableObject: DynamicFeature {
         }
         
         slideDirection = direction
-        // Start Activation Context
-        tile.activate(by: self, in: level, context: .startOn, direction: direction)
-        tile.up.activate(by: self, in: level, context: .startAdjacent(.down), direction: direction)
-        tile.down.activate(by: self, in: level, context: .startAdjacent(.up), direction: direction)
-        tile.left.activate(by: self, in: level, context: .startAdjacent(.right), direction: direction)
-        tile.right.activate(by: self, in: level, context: .startAdjacent(.left), direction: direction)
+        // Start Activation Context       
+        tile.activate(in: level, by: self, context: .startOn, slideDirection: direction)
+        tile.up.activate(in: level, by: self, context: .startAdjacent(.down), slideDirection: direction)
+        tile.down.activate(in: level, by: self, context: .startAdjacent(.up), slideDirection: direction)
+        tile.left.activate(in: level, by: self, context: .startAdjacent(.right), slideDirection: direction)
+        tile.right.activate(in: level, by: self, context: .startAdjacent(.left), slideDirection: direction)
 
         // Slide Into Activation Context
         var nextTile = getNextTile(direction: direction)
-        nextTile.activate(by: self, in: level, context: .slideInto, direction: direction)
+        nextTile.activate(in: level, by: self, context: .slideInto, slideDirection: direction)
         // Loop
         while let direction = slideDirection {
+            print(nextTile.position)
             // Slide Activation Context
             tile = nextTile
-            tile.activate(by: self, in: level, context: .slideOn, direction: direction)
-            tile.up.activate(by: self, in: level, context: .slideAdjacent(.down), direction: direction)
-            tile.down.activate(by: self, in: level, context: .slideAdjacent(.up), direction: direction)
-            tile.left.activate(by: self, in: level, context: .slideAdjacent(.right), direction: direction)
-            tile.right.activate(by: self, in: level, context: .slideAdjacent(.left), direction: direction)
+            tile.activate(in: level, by: self, context: .slideOn, slideDirection: direction)
+            tile.up.activate(in: level, by: self, context: .slideAdjacent(.down), slideDirection: direction)
+            tile.down.activate(in: level, by: self, context: .slideAdjacent(.up), slideDirection: direction)
+            tile.left.activate(in: level, by: self, context: .slideAdjacent(.right), slideDirection: direction)
+            tile.right.activate(in: level, by: self, context: .slideAdjacent(.left), slideDirection: direction)
             // Slide Into Activation Context
             nextTile = getNextTile(direction: direction)
-            nextTile.activate(by: self, in: level, context: .slideInto, direction: direction)
+            nextTile.activate(in: level, by: self, context: .slideInto, slideDirection: direction)
         }
 
-        // Stop Activation Context
-        tile.activate(by: self, in: level, context: .stopOn, direction: direction)
-        tile.up.activate(by: self, in: level, context: .stopAdjacent(.down), direction: direction)
-        tile.down.activate(by: self, in: level, context: .stopAdjacent(.up), direction: direction)
-        tile.left.activate(by: self, in: level, context: .stopAdjacent(.right), direction: direction)
-        tile.right.activate(by: self, in: level, context: .stopAdjacent(.left), direction: direction)
+        // Stop Activation Context       
+        tile.activate(in: level, by: self, context: .stopOn, slideDirection: direction)
+        tile.up.activate(in: level, by: self, context: .stopAdjacent(.down), slideDirection: direction)
+        tile.down.activate(in: level, by: self, context: .stopAdjacent(.up), slideDirection: direction)
+        tile.left.activate(in: level, by: self, context: .stopAdjacent(.right), slideDirection: direction)
+        tile.right.activate(in: level, by: self, context: .stopAdjacent(.left), slideDirection: direction)
     }
     
     func updateState(in level: Level) {

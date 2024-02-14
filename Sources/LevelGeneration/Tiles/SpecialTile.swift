@@ -1,17 +1,18 @@
 class SpecialTile: Tile {
-    var behavior: TileBehavior?
+    var behavior: Behavior?
 
-    init(point: LevelPoint, behavior: TileBehavior? = nil) {
+    init(level: Level, position: LevelPoint, behavior: Behavior? = nil) {
         self.behavior = behavior
-        super.init(point: point)
+        super.init(level: level, position: position)
     }
 
     override var description: String {
         (behavior?.description ?? "Special") + super.description
     }
 
-    override func activate(by levelMovableObject: LevelMovableObject, in level: Level, context: ActivationContext, direction: Direction) {
-        behavior?.activate(by: levelMovableObject, in: level, context: context, direction: direction)
-        super.activate(by: levelMovableObject, in: level, context: context, direction: direction)
+    override func activate(in level: Level, by levelMovableObject: LevelMovableObject,
+                           context: ActivationContext, slideDirection: Direction?) {
+        behavior?.activate(in: level, by: levelMovableObject, context: context, slideDirection: slideDirection)
+        super.activate(in: level, by: levelMovableObject, context: context, slideDirection: slideDirection)
     }
 }

@@ -1,18 +1,20 @@
 class FaceLevel {
+    let owningLevel: Level
     let face: Face
     let faceSize: FaceSize
     
     var tiles: [[Tile]]
 
-    init(face: Face, faceSize: FaceSize) {
+    init(owningLevel: Level, face: Face, faceSize: FaceSize) {
+        self.owningLevel = owningLevel
         self.face = face
         self.faceSize = faceSize
-        self.tiles = Array(repeating: Array(repeating: Tile(point: LevelPoint(face: face, x: 0, y: 0)), count: faceSize.maxY), count: faceSize.maxX)
+        self.tiles = Array(repeating: Array(repeating: Tile(level: owningLevel, position: LevelPoint(face: face, x: 0, y: 0)), count: faceSize.maxY), count: faceSize.maxX)
         
         // Initialize tiles as basic nonPaintable tiles
         for x in 0..<faceSize.maxX {
             for y in 0..<faceSize.maxY {
-                self.tiles[x][y] = Tile(point: LevelPoint(face: face, x: x, y: y))
+                self.tiles[x][y] = Tile(level: owningLevel, position: LevelPoint(face: face, x: x, y: y))
             }
         }
         makeBordersWallTiles()
@@ -62,7 +64,7 @@ class FaceLevel {
     
     private func makeBordersWallTiles() {
         for tile in topBorderTiles + bottomBorderTiles + leftBorderTiles + rightBorderTiles {
-            self.tiles[tile.point.x][tile.point.y] = SpecialTile(point: tile.point, behavior: WallBehavior())
+            self.tiles[tile.position.x][tile.position.y] = SpecialTile(level: owningLevel, position: tile.position, behavior: WallBehavior())
         }
     }
 

@@ -1,4 +1,4 @@
-class StickyBehavior: TileBehavior {
+class StickyBehavior: Behavior {
 
     // Empty Initializer, Sticky Behavior requires no specific input or associated value
     init() {}
@@ -7,7 +7,8 @@ class StickyBehavior: TileBehavior {
         "Sticky"
     }
 
-    func activate(by levelMovableObject: LevelMovableObject, in level: Level, context: ActivationContext, direction: Direction) {        
+    func activate(in level: Level, by levelMovableObject: LevelMovableObject,
+                  context: ActivationContext, slideDirection: Direction?) {        
     }
     
 }

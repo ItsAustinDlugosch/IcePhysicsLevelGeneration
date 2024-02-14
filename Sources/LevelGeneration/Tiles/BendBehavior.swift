@@ -1,4 +1,4 @@
-class BendBehavior: TileBehavior {
+class BendBehavior: Behavior {
     var directionPair: AdjacentDirectionPair
 
     init(directionPair: AdjacentDirectionPair) {
@@ -9,8 +9,9 @@ class BendBehavior: TileBehavior {
         "Bend"
     }
 
-    func activate(by levelMovableObject: LevelMovableObject, in level: Level, context: ActivationContext, direction: Direction) {
-        if case .slideInto = context {
+    func activate(in level: Level, by levelMovableObject: LevelMovableObject,
+                  context: ActivationContext, slideDirection: Direction?) {
+        if case .slideInto = context, let direction = slideDirection {
             // Stops motion and acts similar to wall
             levelMovableObject.slideDirection = directionPair.bendDirection(direction: direction)
         }

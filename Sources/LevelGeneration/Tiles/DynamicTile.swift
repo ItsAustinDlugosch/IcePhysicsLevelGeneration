@@ -1,14 +1,14 @@
 class DynamicTile: SpecialTile, DynamicFeature {
 
-    var dynamicBehavior: TileBehavior? {
+    var dynamicBehavior: Behavior? {
         didSet {
             // What when behavior become dynamic
             print("Dynamic tile behavior change")
         }
     }
 
-    override init(point: LevelPoint, behavior: TileBehavior? = nil) {
-        super.init(point: point, behavior: behavior)
+    override init(level: Level, position: LevelPoint, behavior: Behavior? = nil) {
+        super.init(level: level, position: position, behavior: behavior)
         self.dynamicBehavior = behavior
     }
 
@@ -16,8 +16,9 @@ class DynamicTile: SpecialTile, DynamicFeature {
         (dynamicBehavior?.description ?? "Dynamic") + super.description
     }
 
-    override func activate(by levelMovableObject: LevelMovableObject, in level: Level, context: ActivationContext, direction: Direction) {
-        dynamicBehavior?.activate(by: levelMovableObject, in: level, context: context, direction: direction) ?? super.activate(by: levelMovableObject, in: level, context: context, direction: direction)
+    override func activate(in level: Level, by levelMovableObject: LevelMovableObject,
+                           context: ActivationContext, slideDirection: Direction?) {
+        dynamicBehavior?.activate(in: level, by: levelMovableObject, context: context, slideDirection: slideDirection) ?? super.activate(in: level, by: levelMovableObject, context: context, slideDirection: slideDirection)
     }
     
     func updateState(in level: Level) {        

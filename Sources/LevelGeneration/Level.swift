@@ -3,7 +3,7 @@ class Level {
     let levelSize: LevelSize
     let startingPosition: LevelPoint
     var player: Player!
-    var faceLevels: [FaceLevel]
+    var faceLevels = [FaceLevel]()
 
     init(levelSize: LevelSize, startingPosition: LevelPoint) {
         self.levelSize = levelSize
@@ -11,12 +11,12 @@ class Level {
         var faceLevels = [FaceLevel]()
         for face in Face.allCases {
             let faceSize = levelSize.faceSize(face: face)
-            let faceLevel = FaceLevel(face: face, faceSize: faceSize)
+            let faceLevel = FaceLevel(owningLevel: self, face: face, faceSize: faceSize)
             faceLevels.append(faceLevel)
         }
         self.faceLevels = faceLevels
         setupEdgeTileAdjacency()
-        self.player = Player(level: self, startingTile: getTile(at: startingPosition)!)
+        self.player = Player(level: self, startingPosition: startingPosition)
     }
 
     // Initializing Functions
@@ -80,11 +80,11 @@ class Level {
     }
 
     func setTile(to newTile: Tile) {
-        guard let oldTile = getTile(at: newTile.point) else {
+        guard let oldTile = getTile(at: newTile.position) else {
             print("cant set at invalid LevelPoint")
             return
         }
-        faceLevels[newTile.point.face.rawValue].tiles[newTile.point.x][newTile.point.y] = newTile
+        faceLevels[newTile.position.face.rawValue].tiles[newTile.position.x][newTile.position.y] = newTile
         if let upTile = oldTile.up {
             newTile.up = upTile
             upTile.down = newTile
