@@ -18,7 +18,6 @@ class Entity: LevelObject, DynamicFeature {
             self.behavior = behavior
         }
         super.init(level: level, position: startingPosition)
-        tile.entity = self
     }
 
     

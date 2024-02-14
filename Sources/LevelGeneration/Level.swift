@@ -2,8 +2,8 @@ class Level {
 
     let levelSize: LevelSize
     let startingPosition: LevelPoint
-    var player: Player!
     var tiles = [LevelPoint:Tile]()
+    var entities = [LevelPoint:Entity]()
 
     init(levelSize: LevelSize, startingPosition: LevelPoint) {
         self.levelSize = levelSize
@@ -77,15 +77,15 @@ class Level {
                 }
             }
         }
-        self.player = Player(level: self, startingPosition: startingPosition)
     }
 
 
-    func setTile(to newTile: Tile) {
-        guard let oldTile = tiles[newTile.position] else {
-            print("cant set tile at invalid LevelPoint of \(newTile.position)")
+    func setTileBehavior(behavior: TileBehavior, at position: LevelPoint, dynamic: Bool = false) {
+        guard let oldTile = tiles[position] else {
+            print("Cannot set tile behavior at invalid level point of \(position)")
             return
         }
+        let newTile = dynamic ? DynamicTile(level: self, position: position, behavior: behavior) : Tile(level: self, position: position, behavior: behavior)
         tiles[newTile.position] = newTile
         if let upTile = oldTile.up {
             newTile.up = upTile
@@ -105,8 +105,19 @@ class Level {
         }
     }
 
-    func simulatePlayerSlide() {
-        player.slide(.down)        
+    func addEntity(_ entity: Entity) {
+        guard let tile = tiles[entity.position], tile.entity == nil else {
+            print("Cannot add entity because the tile at \(entity.position) is already occupied or does not exist.")
+            return
+        }
+        tile.entity = entity
+        entities[entity.position] = entity
+    }
+
+    func simulateSlide(_ direction: Direction) {
+        for entity in entities.values {
+            entity.slide(direction)
+        }
     }    
 }
 
