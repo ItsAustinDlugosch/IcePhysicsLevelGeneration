@@ -64,7 +64,7 @@ class FaceLevel {
     
     private func makeBordersWallTiles() {
         for tile in topBorderTiles + bottomBorderTiles + leftBorderTiles + rightBorderTiles {
-            self.tiles[tile.position.x][tile.position.y] = SpecialTile(level: owningLevel, position: tile.position, behavior: WallBehavior())
+            self.tiles[tile.position.x][tile.position.y] = Tile(level: owningLevel, position: tile.position, behavior: WallBehavior())
         }
     }
 

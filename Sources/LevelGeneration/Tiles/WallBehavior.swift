@@ -1,18 +1,13 @@
-class WallBehavior: Behavior {
+class WallBehavior: TileBehavior {
 
-    // Empty Initializer, Wall Behavior requires no specific input or associated value
-    init() {}
-
-    var description: String {
-        "Wall"
+    override var description: String {
+        "Wall" + super.description
     }
 
-    func activate(in level: Level, by levelMovableObject: LevelMovableObject,
-                  context: ActivationContext, slideDirection: Direction?) {
-        print("activated wall")
+    override func activate(in level: Level, entity: Entity, context: ActivationContext) {
         if case .slideInto = context {            
             // Stop Player by setting slideDirection to nil            
-            levelMovableObject.slideDirection = nil
+            entity.slideDirection = nil
         }
     }
 }

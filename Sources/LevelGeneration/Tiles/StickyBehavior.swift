@@ -1,14 +1,13 @@
-class StickyBehavior: Behavior {
+class StickyBehavior: TileBehavior {
 
-    // Empty Initializer, Sticky Behavior requires no specific input or associated value
-    init() {}
-
-    var description: String {
-        "Sticky"
+    override var description: String {
+        "Sticky" + super.description
     }
 
-    func activate(in level: Level, by levelMovableObject: LevelMovableObject,
-                  context: ActivationContext, slideDirection: Direction?) {        
+    override func activate(in level: Level, entity: Entity, context: ActivationContext) {
+        if case .slideOn = context {
+            entity.slideDirection = nil
+        }
     }
     
 }

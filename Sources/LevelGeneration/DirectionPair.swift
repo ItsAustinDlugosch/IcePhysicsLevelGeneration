@@ -10,11 +10,11 @@ struct AdjacentDirectionPair {
         self.exitTwo = exitTwo
     }
 
-    func bendDirection(direction: Direction) -> Direction? {
-        if direction.toggle() == exitOne {
+    func bendDirection(direction: Direction?) -> Direction? {
+        if direction?.toggle() == exitOne {
             return exitTwo            
         }
-        if direction.toggle() == exitTwo {
+        if direction?.toggle() == exitTwo {
             return exitOne
         }
         return nil

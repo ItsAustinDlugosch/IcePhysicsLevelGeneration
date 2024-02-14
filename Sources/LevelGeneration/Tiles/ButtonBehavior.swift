@@ -1,21 +1,20 @@
-class ButtonBehavior: Behavior {
+class ButtonBehavior: TileBehavior {
 
     weak var targetTile: DynamicTile?
-    let activationBehavior: Behavior
+    let activationBehavior: TileBehavior
 
-    init(activationBehavior: Behavior, targetTile: DynamicTile? = nil) {
+    init(activationBehavior: TileBehavior, targetTile: DynamicTile? = nil) {
         self.activationBehavior = activationBehavior
         self.targetTile = targetTile
     }
 
-    var description: String {
-        "Button"
+    override var description: String {
+        "Button" + super.description
     }
 
-    func activate(in level: Level, by levelMovableObject: LevelMovableObject,
-                  context: ActivationContext, slideDirection: Direction?) {
+    override func activate(in level: Level, entity: Entity, context: ActivationContext) {
         if case .slideOn = context, let targetTile = targetTile {
-            targetTile.dynamicBehavior = activationBehavior
+            targetTile.dynamicTileBehavior = activationBehavior
         }
     }
     

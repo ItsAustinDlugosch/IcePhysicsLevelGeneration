@@ -11,7 +11,6 @@ class LevelObject: Behavior {
         "Level Object at position \(position)"
     }
 
-    func activate(in level: Level, by levelMovableObject: LevelMovableObject, context: ActivationContext, slideDirection: Direction?) {     
+    func activate(in level: Level, levelObject: LevelObject, context: ActivationContext) {
     }
-    
 }

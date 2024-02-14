@@ -1,18 +1,17 @@
-class PortalBehavior: Behavior {
+class PortalBehavior: TileBehavior {
     var destination: Tile
 
     init(destination: Tile) {
         self.destination = destination
     }
 
-    var description: String {
-        "Portal"
+    override var description: String {
+        "Portal" + super.description
     }
 
-    func activate(in level: Level, by levelMovableObject: LevelMovableObject,
-                  context: ActivationContext, slideDirection: Direction?) {
+    override func activate(in level: Level, entity: Entity, context: ActivationContext) {
         if case .slideOn = context {
-            levelMovableObject.tile = destination
+            entity.tile = destination
         }
     }
 }
