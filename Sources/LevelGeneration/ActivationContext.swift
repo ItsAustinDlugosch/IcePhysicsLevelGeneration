@@ -1,4 +1,4 @@
-enum ActivationContext {
+enum ActivationContext: Equatable {
     // How a tiles are interacted with by LevelMovableobjects
     // Start On -> Start Adjacent -> Slide Into
     // Slide On -> Slide Adjcaent -> Slide Into

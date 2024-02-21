@@ -1,4 +1,4 @@
-class LevelObject: Behavior {
+class LevelObject: CustomStringConvertible {
     let level: Level
     let position: LevelPoint
 
@@ -11,6 +11,4 @@ class LevelObject: Behavior {
         "Level Object at position \(position)"
     }
 
-    func activate(in level: Level, levelObject: LevelObject, context: ActivationContext) {
-    }
 }

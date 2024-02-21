@@ -5,6 +5,8 @@ class Level {
     var tiles = [LevelPoint:Tile]()
     var entities = [LevelPoint:Entity]()
 
+    var collisionHandler = CollisionHandler()
+
     init(levelSize: LevelSize, startingPosition: LevelPoint) {
         self.levelSize = levelSize
         self.startingPosition = startingPosition
@@ -80,7 +82,7 @@ class Level {
     }
 
 
-    func setTileBehavior(behavior: TileBehavior, at position: LevelPoint, dynamic: Bool = false) {
+    func setTileBehavior(behavior: Behavior, at position: LevelPoint, dynamic: Bool = false) {
         guard let oldTile = tiles[position] else {
             print("Cannot set tile behavior at invalid level point of \(position)")
             return
@@ -115,10 +117,34 @@ class Level {
     }
 
     func simulateSlide(_ direction: Direction) {
-        for entity in entities.values {
-            entity.slide(direction)
+        let entities = [Entity](entities.values)
+        entities.forEach {
+            $0.slideDirection = direction
+            $0.startSlideActivation()
+            $0.slideIntoActivation()
+        }
+
+        var slidingEntities = entities.filter { $0.isSliding() }
+        collisionHandler.handleCollisions(slidingEntities: &slidingEntities)
+                
+        while slidingEntities.count > 0 {
+            slidingEntities.forEach {
+                guard let nextTile = $0.nextTile() else {
+                    fatalError("Sliding Entity is unexpectedly non sliding.")
+                }
+                $0.tile = nextTile
+                $0.continueSlideActivation()
+                $0.slideIntoActivation()
+            }
+            slidingEntities = slidingEntities.filter { $0.isSliding() }
+            collisionHandler.handleCollisions(slidingEntities: &slidingEntities)
+        }
+
+        entities.forEach {
+            $0.stopSlideActivation()
         }
     }    
+
 }
 
 extension Level {
