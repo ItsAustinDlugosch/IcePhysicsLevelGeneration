@@ -1,26 +1,63 @@
-public struct Tile { // Represents a tile on the level grid
-    public let point: LevelPoint // Each tile has a point
-    public var tileStatus: TileStatus // The state of each tile
-    public var specialTileType: SpecialTileType? // The type of tile, nil is a basic tile
+class Tile: LevelObject {    
+    var status: TileStatus
+    var behavior: Behavior?
 
-    public init(point: LevelPoint, tileStatus: TileStatus = .nonPaintable, specialTileType: SpecialTileType? = nil) {        
-        self.point = point
-        self.tileStatus = tileStatus
-        self.specialTileType = specialTileType
+    init(level: Level, position: LevelPoint,
+         status: TileStatus = .nonPaintable, behavior: Behavior? = nil) {
+        self.status = status
+        self.behavior = behavior
+        super.init(level: level, position: position)
     }
-}
+        
+    // Adjacency Stitched by FaceLevel and Level
+    weak var up: Tile!
+    weak var down: Tile!
+    weak var left: Tile!
+    weak var right: Tile!
 
-extension Tile: Equatable, Hashable {
+    weak var entity: Entity? {
+        willSet {
+            print("changing tile entity from \(entity?.description ?? "nothing")")
+        }
+        didSet {
+            print("changed tile entity to \(entity?.description ?? "nothing")")
+        }
+    }
 
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(point)
-        hasher.combine(tileStatus)
-        hasher.combine(specialTileType)
+    func adjacentTileDirection(_ tile: Tile) -> Direction? {
+        if self.up === tile {
+            return .up
+        }
+        if self.down === tile {
+            return .down
+        }
+        if self.left === tile {
+            return .left
+        }
+        if self.right === tile {
+            return .right
+        }
+        return nil
     }
-    
-    public static func ==(lhs: Tile, rhs: Tile) -> Bool {
-        return lhs.point == rhs.point &&
-          lhs.tileStatus == rhs.tileStatus &&
-          lhs.specialTileType == rhs.specialTileType
+
+   override var description: String {
+       "\(entity?.description ?? behavior?.description ?? "Tile"), \(status)"
     }
+
+   func activate(entity: Entity, context: ActivationContext) {
+       if behavior != nil {
+           behavior!.activate(entity: entity, context: context)
+       }
+       if let tileEntity = self.entity {           
+           if let player = tileEntity as? Player {
+               player.updateTileStatus(context: context)
+           }
+           if entity !== tileEntity {
+               print("portal tele, \(context)")
+               tileEntity.behavior?.activate(entity: entity, context: context)
+               print(entity.tile.position)
+               print((tileEntity.behavior! as! PortalBehavior).destination.position)
+           }
+       }
+   }
 }

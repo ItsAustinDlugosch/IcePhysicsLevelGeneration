@@ -15,7 +15,7 @@ public struct LevelSize { // Defines a level size with a length, width, and heig
         self.height = edgeLength
     }
 
-    public func faceSize(face: Face) -> FaceSize {
+    public func faceSize(_ face: Face) -> FaceSize {
         switch face {
         case .top, .bottom:
             return FaceSize(maxX: length, maxY: width)

@@ -1,4 +1,4 @@
-public struct LevelPoint: SpecialTileTypeData, CustomStringConvertible { // Defines a point with an x and y value
+public struct LevelPoint: CustomStringConvertible { // Defines a point with an x and y value
     public let face: Face
     public let x: Int
     public let y: Int

@@ -13,4 +13,14 @@ public enum Direction: CaseIterable, Hashable, Codable {
             return .left
         }
     }
+
+    public func isAdjacentTo(_ direction: Direction) -> Bool {
+        switch (self, direction) {
+        case (.up, .left), (.up, .right),
+             (.down, .left), (.down, .right),
+             (.left, .up), (.left, .down),
+             (.right, .up), (.right, .down):return true
+        default:return false
+        }
+    }
 }
