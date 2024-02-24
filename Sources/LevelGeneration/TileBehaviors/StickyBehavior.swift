@@ -1,5 +1,4 @@
 class StickyBehavior: Behavior {
-    static let activatedBy: [ActivationContext] = [.slideOn]
 
     var description: String {
         "Sticky"

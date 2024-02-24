@@ -1,22 +1,19 @@
 class Player: Entity {
 
     // No option for behavior
-    init(level: Level, startingPosition: LevelPoint) {
-        super.init(level: level, startingPosition: startingPosition)
+    init(level: Level, position: LevelPoint) {
+        super.init(level: level, position: position)
     }
 
     override var description: String {
         "Player" + super.description
     }
 
-    func updateTileStatus(context: ActivationContext) {
-        switch context {
-        case .startOn, .stopOn:
-            tile.status = .critical
-        case .slideOn where tile.status != .critical:
-            tile.status = .paintable
-        default:
-            return
+    override func updateTileStatus() {
+        if slideDirection != nil {
+            currentTile.status = .paintable
+        } else {
+            currentTile.status = .critical
         }
     }
 }

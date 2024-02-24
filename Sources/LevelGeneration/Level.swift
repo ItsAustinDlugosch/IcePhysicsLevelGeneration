@@ -5,8 +5,6 @@ class Level {
     var tiles = [LevelPoint:Tile]()
     var entities = [LevelPoint:Entity]()
 
-    var collisionHandler = CollisionHandler()
-
     init(levelSize: LevelSize, startingPosition: LevelPoint) {
         self.levelSize = levelSize
         self.startingPosition = startingPosition
@@ -82,12 +80,12 @@ class Level {
     }
 
 
-    func setTileBehavior(behavior: Behavior, at position: LevelPoint, dynamic: Bool = false) {
+    func setTile(behavior: Behavior, at position: LevelPoint) {
         guard let oldTile = tiles[position] else {
             print("Cannot set tile behavior at invalid level point of \(position)")
             return
         }
-        let newTile = dynamic ? DynamicTile(level: self, position: position, behavior: behavior) : Tile(level: self, position: position, behavior: behavior)
+        let newTile = Tile(level: self, position: position, behavior: behavior)
         tiles[newTile.position] = newTile
         if let upTile = oldTile.up {
             newTile.up = upTile
@@ -108,43 +106,129 @@ class Level {
     }
 
     func addEntity(_ entity: Entity) {
-        guard let tile = tiles[entity.position], tile.entity == nil else {
-            print("Cannot add entity because the tile at \(entity.position) is already occupied or does not exist.")
-            return
+        guard entities[entity.position] == nil else {
+            fatalError("Cannot insert entity where one is already located")
         }
-        tile.entity = entity
         entities[entity.position] = entity
     }
 
+    func activateLevelObject(at levelPoint: LevelPoint, entity: Entity, context: ActivationContext) {
+        guard let tile = tiles[levelPoint] else {
+            fatalError("LevelPoint out of range")            
+        }
+        let levelObject: LevelObject = entities[levelPoint] ?? tile
+        levelObject.behavior?.activate(entity: entity, context: context)
+    }
+    func activateTile(at levelPoint: LevelPoint, entity: Entity, context: ActivationContext) {
+        guard let tile = tiles[levelPoint] else {
+            fatalError("LevelPoint out of range")
+        }
+        tile.behavior?.activate(entity: entity, context: context)
+    }
+    func performCollisionBetween(_ entityOne: Entity, and entityTwo: Entity) {
+        // First activate each behavior onto the other with .slideInto context        
+        entityOne.behavior?.activate(entity: entityTwo, context: .slideInto)
+        entityTwo.behavior?.activate(entity: entityOne, context: .slideInto)
+        // Then activate each behavior onto the other with .slideOn context
+        entityOne.behavior?.activate(entity: entityTwo, context: .slideOn)
+        entityTwo.behavior?.activate(entity: entityOne, context: .slideOn)
+    }
+
     func simulateSlide(_ direction: Direction) {
-        let entities = [Entity](entities.values)
-        entities.forEach {
-            $0.slideDirection = direction
-            $0.startSlideActivation()
-            $0.slideIntoActivation()
-        }
-
-        var slidingEntities = entities.filter { $0.isSliding() }
-        collisionHandler.handleCollisions(slidingEntities: &slidingEntities)
-                
-        while slidingEntities.count > 0 {
-            slidingEntities.forEach {
-                guard let nextTile = $0.nextTile() else {
-                    fatalError("Sliding Entity is unexpectedly non sliding.")
-                }
-                $0.tile = nextTile
-                $0.continueSlideActivation()
-                $0.slideIntoActivation()
+        var slidingEntities = Array(entities.values)
+        var nextTiles = [Tile]()
+        for (entityIndex, entity) in slidingEntities.enumerated() {
+            entity.slideDirection = direction
+            // Start Slide Activation
+            activateTile(at: entity.currentTile.position, entity: entity, context: .startOn)
+            activateLevelObject(at: entity.currentTile.up.position, entity: entity, context: .startAdjacent(.down))
+            activateLevelObject(at: entity.currentTile.down.position, entity: entity, context: .startAdjacent(.up))
+            activateLevelObject(at: entity.currentTile.left.position, entity: entity, context: .startAdjacent(.right))
+            activateLevelObject(at: entity.currentTile.right.position, entity: entity, context: .startAdjacent(.left))
+            if let nextTile = entity.nextTile() {
+                nextTiles.append(nextTile)
+                activateLevelObject(at: nextTile.position, entity: entity, context: .slideInto)
+            } else {
+                slidingEntities.remove(at: entityIndex)
             }
-            slidingEntities = slidingEntities.filter { $0.isSliding() }
-            collisionHandler.handleCollisions(slidingEntities: &slidingEntities)
         }
 
-        entities.forEach {
-            $0.stopSlideActivation()
+        func filterSliding() {
+            // Filter for the entities that are still sliding and remove at indices accordingly
+            precondition(slidingEntities.count == nextTiles.count, "Number of sliding entities was unexpectedly not equal to number of next tiles")
+            var filteredIndices = [Int]()
+            for index in 0 ..< slidingEntities.count {
+                if !slidingEntities[index].isSliding() {
+                    filteredIndices.append(index)
+                }
+            }
+            filteredIndices.forEach {
+                slidingEntities.remove(at: $0)
+                nextTiles.remove(at: $0)
+            }
         }
-    }    
+        filterSliding()
 
+        func testCollisions() {        
+            for i in 0 ..< slidingEntities.count {
+                for j in (i + 1) ..< slidingEntities.count {
+                    // Tiles at i and j are the same instance, so access corresponding entities
+                    if nextTiles[i] === nextTiles[j] {
+                        let entity1 = slidingEntities[i]
+                        let entity2 = slidingEntities[j]
+                        // Perform collision check or operation with entity1 and entity2
+                        performCollisionBetween(entity1, and: entity2)
+                    }
+                }
+            }
+        }
+        
+        testCollisions()
+        filterSliding()
+
+        while slidingEntities.count > 0 {
+
+            // Clear out next tiles
+            nextTiles = []
+            
+            slidingEntities.forEach { entity in
+                // Get next tile to advance the location of everyobject
+                guard let nextFrameTile = entity.nextTile() else {
+                    fatalError("Expected entity to be sliding.")
+                }
+                entities[entity.currentTile.position] = nil
+                entities[nextFrameTile.position] = entity
+                entity.currentTile = nextFrameTile
+            }
+            for (entityIndex, entity) in slidingEntities.enumerated() {
+                activateTile(at: entity.currentTile.position, entity: entity, context: .slideOn)
+                activateLevelObject(at: entity.currentTile.up.position, entity: entity, context: .slideAdjacent(.down))
+                activateLevelObject(at: entity.currentTile.down.position, entity: entity, context: .slideAdjacent(.up))
+                activateLevelObject(at: entity.currentTile.left.position, entity: entity, context: .slideAdjacent(.right))
+                activateLevelObject(at: entity.currentTile.right.position, entity: entity, context: .slideAdjacent(.left))
+
+                if let nextTile = entity.nextTile() {
+                    nextTiles.append(nextTile)
+                    activateLevelObject(at: nextTile.position, entity: entity, context: .slideInto)
+                } else {
+                    slidingEntities.remove(at: entityIndex)
+                }
+            }
+            filterSliding()
+            testCollisions()
+            filterSliding()
+            
+        }
+
+        slidingEntities.forEach { entity in
+            activateTile(at: entity.currentTile.position, entity: entity, context: .stopOn)
+            activateLevelObject(at: entity.currentTile.up.position, entity: entity, context: .stopAdjacent(.down))
+            activateLevelObject(at: entity.currentTile.down.position, entity: entity, context: .stopAdjacent(.up))
+            activateLevelObject(at: entity.currentTile.left.position, entity: entity, context: .stopAdjacent(.right))
+            activateLevelObject(at: entity.currentTile.right.position, entity: entity, context: .stopAdjacent(.left))
+        }
+        
+    }
 }
 
 extension Level {

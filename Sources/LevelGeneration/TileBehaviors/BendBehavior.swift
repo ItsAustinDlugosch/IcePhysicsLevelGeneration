@@ -14,7 +14,6 @@ class BendBehavior: Behavior {
     func activate(entity: Entity, context: ActivationContext) {
         if case .slideOn = context {
             // Stops motion and acts similar to wall
-            print("slid into direction bend, \(directionPair)")
             entity.slideDirection = directionPair.bendDirection(direction: entity.slideDirection)
         }
     }

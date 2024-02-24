@@ -1,5 +1,4 @@
 class BouncyTile: Behavior {
-    static let activatedBy: [ActivationContext] = [.slideInto]
 
     var description: String {
         "Bouncy"

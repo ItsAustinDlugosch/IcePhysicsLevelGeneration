@@ -1,5 +1,4 @@
 class PortalBehavior: Behavior {
-    static let activatedBy: [ActivationContext] = [.slideOn]
     
     var destination: Tile
 
@@ -12,9 +11,8 @@ class PortalBehavior: Behavior {
     }
 
     func activate(entity: Entity, context: ActivationContext) {
-        if case .slideOn = context {
-            print("teleporting \(entity.description)")
-            entity.tile = destination
+        if case .slideInto = context {
+            entity.currentTile = destination
         }
     }
 }
