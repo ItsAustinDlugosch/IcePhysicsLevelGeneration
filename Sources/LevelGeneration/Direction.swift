@@ -1,4 +1,4 @@
-public enum Direction: CaseIterable, Hashable, Codable {
+public enum Direction: String, CaseIterable, Hashable, Codable {
     case up, down, left, right
 
     public func toggle() -> Direction {

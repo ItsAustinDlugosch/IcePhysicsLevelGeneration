@@ -4,5 +4,5 @@ public enum Face: Int, Hashable, CaseIterable, Decodable { // Represents a face 
     case top = 2
     case right = 3
     case front = 4
-    case bottom = 5
+    case bottom = 5    
 }
