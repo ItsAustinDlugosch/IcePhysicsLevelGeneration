@@ -125,12 +125,19 @@ class Level {
         }
         tile.behavior?.activate(entity: entity, context: context)
     }
-    func performCollisionBetween(_ entityOne: Entity, and entityTwo: Entity) {
+    func performTileCollisionBetween(_ entityOne: Entity, and entityTwo: Entity) {
+        print("found collision at \(entityOne.currentTile.position)")
         // First activate each behavior onto the other with .slideInto context        
         entityOne.behavior?.activate(entity: entityTwo, context: .slideInto)
         entityTwo.behavior?.activate(entity: entityOne, context: .slideInto)
         // Then activate each behavior onto the other with .slideOn context
         entityOne.behavior?.activate(entity: entityTwo, context: .slideOn)
+        entityTwo.behavior?.activate(entity: entityOne, context: .slideOn)
+    }
+    // Edge Collisions are not commutative, the first operand is sliding into the second
+    func performEdgeCollision(by entityOne: Entity, on entityTwo: Entity) {
+        print("found collision at \(entityOne.currentTile.position)")
+        entityTwo.behavior?.activate(entity: entityOne, context: .slideInto)
         entityTwo.behavior?.activate(entity: entityOne, context: .slideOn)
     }
 
@@ -170,14 +177,21 @@ class Level {
         filterSliding()
 
         func testCollisions() {        
-            for i in 0 ..< slidingEntities.count {
-                for j in (i + 1) ..< slidingEntities.count {
+            for this in 0 ..< slidingEntities.count {
+                for next in (this + 1) ..< slidingEntities.count {
+                    // Test for collisions that occur within a tile
                     // Tiles at i and j are the same instance, so access corresponding entities
-                    if nextTiles[i] === nextTiles[j] {
-                        let entity1 = slidingEntities[i]
-                        let entity2 = slidingEntities[j]
+                    if nextTiles[this] === nextTiles[next] {
                         // Perform collision check or operation with entity1 and entity2
-                        performCollisionBetween(entity1, and: entity2)
+                        performTileCollisionBetween(slidingEntities[this], and: slidingEntities[next])
+                    }
+
+                    // Test for collisions that occur on a tile edge
+                    if nextTiles[this] === slidingEntities[next].currentTile  {
+                        performEdgeCollision(by: slidingEntities[this], on: slidingEntities[next])
+                    }
+                    if nextTiles[next] === slidingEntities[this].currentTile {
+                        performEdgeCollision(by: slidingEntities[next], on: slidingEntities[this])
                     }
                 }
             }

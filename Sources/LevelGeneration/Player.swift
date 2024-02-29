@@ -6,7 +6,7 @@ class Player: Entity {
     }
 
     override var description: String {
-        "Player" + super.description
+        (behavior?.description ?? "") + "PlayerEntity" 
     }
 
     override func updateTileStatus() {

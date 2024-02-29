@@ -2,7 +2,6 @@ import Foundation
 
 class Entity: LevelObject, DynamicFeature {
 
-    let id: UUID
     var currentTile: Tile {
         didSet {
             updateTileStatus()
@@ -25,13 +24,12 @@ class Entity: LevelObject, DynamicFeature {
         guard let startingTile = level.tiles[position] else {
             fatalError("LevelPoint out of range")
         }
-        self.id = UUID()
         self.currentTile = startingTile        
         super.init(level: level, position: position, behavior: behavior)
     }
 
     override var description: String {
-        "Entity"
+        (behavior?.description ?? "") + "Entity"
     }
 
     func isSliding() -> Bool {
@@ -53,16 +51,4 @@ class Entity: LevelObject, DynamicFeature {
 
     func updateState(in level: Level) {       
     }
-}
-
-extension Entity: Equatable, Hashable {
-
-    static func ==(lhs: Entity, rhs: Entity) -> Bool {
-        return lhs.id == rhs.id        
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
-    
 }
