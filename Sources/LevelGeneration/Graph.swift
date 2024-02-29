@@ -1,12 +1,14 @@
 public struct Graph { // Represents the relationship between slides on a level grid
     public var slides = Set<Slide>()
-
+    var originToSlide = [SlideState:Slide]()
     public mutating func insertSlide(_ slide: Slide) {
         slides.insert(slide)
+        originToSlide[slide.origin] = slide
     }
 
     public mutating func clearGraph() {
         slides = []
+        originToSlide = [:]
     }
     
     public func breadthFirstSearch(origin: LevelPoint, destination: LevelPoint) -> [Slide]? {
@@ -61,5 +63,22 @@ public struct Graph { // Represents the relationship between slides on a level g
     public func isolatedSlides() -> Set<Slide> {
         let destinationHistogram: [SlideState:Int] = slides.map { $0.destination }.histogram()
         return slides(withDestinationStates: destinationHistogram.allKeysForValue(value: 1))
+    }
+}
+
+extension Graph: Codable {
+    private enum CodingKeys: String, CodingKey {
+        case originToSlide = "origin_to_slide"        
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(originToSlide, forKey: .originToSlide)
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let originToSlide = try container.decode([SlideState:Slide].self, forKey: .originToSlide)
+        self.init(slides: Set(originToSlide.values), originToSlide: originToSlide)
     }
 }

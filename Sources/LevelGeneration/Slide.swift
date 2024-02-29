@@ -25,3 +25,26 @@ extension Slide: Hashable, Equatable {
         hasher.combine(destination)
     }
 }
+
+extension Slide: Codable {
+    private enum CodingKeys: String, CodingKey {
+        case origin
+        case destination
+        case intermediates
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(origin, forKey: .origin)
+        try container.encode(destination, forKey: .destination)
+        try container.encode(intermediates, forKey: .intermediates)        
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let origin = try container.decode(SlideState.self, forKey: .origin)
+        let destination = try container.decode(SlideState.self, forKey: .destination)
+        let intermediates = try container.decode([SlideState].self, forKey: .intermediates)
+        self.init(origin: origin, destination: destination, intermediates: intermediates)
+    }
+}

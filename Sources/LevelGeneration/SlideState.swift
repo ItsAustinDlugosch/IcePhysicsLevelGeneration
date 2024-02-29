@@ -19,3 +19,23 @@ extension SlideState: Equatable, Hashable {
         hasher.combine(direction)
     }
 }
+
+extension SlideState: Codable {
+    private enum CodingKeys: String, CodingKey {
+        case point
+        case direction
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(point, forKey: .point)
+        try container.encode(direction, forKey: .direction)
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let point = try container.decode(LevelPoint.self, forKey: .point)
+        let direction = try container.decode(Direction.self, forKey: .direction)
+        self.init(point: point, direction: direction)
+    }
+}

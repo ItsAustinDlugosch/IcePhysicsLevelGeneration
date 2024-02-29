@@ -320,6 +320,7 @@ extension Level: Codable {
         case faceTiles = "face_tiles"
         case directionShiftTileData = "direction_shift_tile_data"
         case portalTileData = "portal_tile_data"
+        case levelGraph = "level_graph"
     }
     
     public func encode(to encoder: Encoder) throws {
@@ -356,6 +357,7 @@ extension Level: Codable {
         try container.encode(intTiles, forKey: .faceTiles)
         try container.encode(directionShiftTileData, forKey: .directionShiftTileData)
         try container.encode(portalTileData, forKey: .portalTileData)
+        try container.encode(levelGraph, forKey: .levelGraph)
     }
 
     static let supportedVersions = ["1.0.0", "1.1.0", "2.0.0"]
