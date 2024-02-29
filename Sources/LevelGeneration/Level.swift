@@ -312,7 +312,7 @@ public struct Level {
 }
 
 extension Level: Codable {
-    static let version = "2.0.0"
+    static let version = "3.0.0"
     
     private enum CodingKeys: String, CodingKey {
         case version
@@ -360,7 +360,7 @@ extension Level: Codable {
         try container.encode(levelGraph, forKey: .levelGraph)
     }
 
-    static let supportedVersions = ["1.0.0", "1.1.0", "2.0.0"]
+    static let supportedVersions = ["1.0.0", "1.1.0", "2.0.0", "3.0.0"]
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
