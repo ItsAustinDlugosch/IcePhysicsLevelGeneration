@@ -1,6 +1,6 @@
 public struct Graph { // Represents the relationship between slides on a level grid
     public var slides = Set<Slide>()
-    var originToSlide = [SlideState:Slide]()
+    public var originToSlide = [SlideState:Slide]()
     public mutating func insertSlide(_ slide: Slide) {
         slides.insert(slide)
         originToSlide[slide.origin] = slide
