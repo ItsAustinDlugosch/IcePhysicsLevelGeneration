@@ -196,20 +196,33 @@ public struct Level {
         
         let start = currentSlideState == nil
         let currentSlideState = currentSlideState ?? origin
-        let adjacentSlideState = adjacentState(from: currentSlideState)
+        var adjacentSlideState = adjacentState(from: currentSlideState)
         var intermediates = intermediates
 
-        let specialTileType = faceLevels[adjacentSlideState.point.face.rawValue].tiles[adjacentSlideState.point.x][adjacentSlideState.point.y].specialTileType
-        // If the adjacent specialTileType is not a wall, player will move forward meaning the current is appended to intermediates
-        if specialTileType != .wall && !start {
+        // Special Tiles Types that can also be critical that require activation upon slide activation should activate here
+        let currentSpecialTileType = faceLevels[currentSlideState.point.face.rawValue].tiles[currentSlideState.point.x][currentSlideState.point.y].specialTileType
+        if start {
+            switch currentSpecialTileType {
+            case .directionShift(let directionPair):
+                if let shiftedDirection = directionPair.shiftDirection(currentSlideState.direction) {
+                    adjacentSlideState = SlideState(point: adjacentSlideState.point, direction: shiftedDirection)
+                }
+            default:
+                break
+            }
+        }
+        
+        let adjacentSpecialTileType = faceLevels[adjacentSlideState.point.face.rawValue].tiles[adjacentSlideState.point.x][adjacentSlideState.point.y].specialTileType
+        // If the adjacent adjacentSpecialTileType is not a wall, player will move forward meaning the current is appended to intermediates
+        if adjacentSpecialTileType != .wall && !start {
             intermediates.append(currentSlideState)
         }
-        if specialTileType == nil { // No Special Tiles to Process, Slide Normally            
+        if adjacentSpecialTileType == nil { // No Special Tiles to Process, Slide Normally            
             return slideTile(origin: origin,
                              currentSlideState: adjacentSlideState,
                              intermediates: intermediates)
         }
-        switch specialTileType! {
+        switch adjacentSpecialTileType! {
         case .portal(let portalExit):
             // When exiting a portal, the player must exit not on the exit but on its adjacent point
             // because if these portals came in pairs, the player would be infinitely teleported
