@@ -196,7 +196,7 @@ public struct Level {
         
         let start = currentSlideState == nil
         let currentSlideState = currentSlideState ?? origin
-        var adjacentSlideState = adjacentState(from: currentSlideState)
+        let adjacentSlideState = adjacentState(from: currentSlideState)
         var intermediates = intermediates
 
         // Special Tiles Types that can also be critical that require activation upon slide activation should activate here
@@ -205,7 +205,10 @@ public struct Level {
             switch currentSpecialTileType {
             case .directionShift(let directionPair):
                 if let shiftedDirection = directionPair.shiftDirection(currentSlideState.direction) {
-                    adjacentSlideState = SlideState(point: adjacentSlideState.point, direction: shiftedDirection)
+                    let adjustedSlideState = SlideState(point: currentSlideState.point, direction: shiftedDirection)
+                    return slideTile(origin: origin,
+                                     currentSlideState: adjustedSlideState,
+                                     intermediates: [adjustedSlideState])
                 }
             default:
                 break
