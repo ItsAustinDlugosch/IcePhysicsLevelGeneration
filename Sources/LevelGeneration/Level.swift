@@ -104,40 +104,40 @@ public struct Level {
         return faceLevels.reduce(Set<LevelPoint>(), { $0.union($1.tilePointsOfStatusAndType(tileStatus: tileStatus, specialTileType: specialTileType)) })
     }
 
-    static let crossEdgeMap: [Edge:(Face, Direction, [EdgeTransformation])] = [
-      Edge(.back, .up):(.bottom, .up, [.maxY]),
-      Edge(.back, .right):(.right, .down, [.invertDeltaY, .swap, .minY]),
-      Edge(.back, .down):(.top, .down, [.minY]),
-      Edge(.back, .left):(.left, .down, [.swap, .minY]),
-      Edge(.left, .up):(.back, .right, [.swap]),
-      Edge(.left, .right):(.top, .right, [.minX]),
-      Edge(.left, .down):(.front, .right, [.invertDeltaX, .swap, .minX]),
-      Edge(.left, .left):(.bottom, .right, [.invertDeltaY, .minX]),
-      Edge(.top, .up):(.back, .up, [.maxY]),
-      Edge(.top, .right):(.right, .right, [.minX]),
-      Edge(.top, .down):(.front, .down, [.minY]),
-      Edge(.top, .left):(.left, .left, [.maxX]),
-      Edge(.right, .up):(.back, .left, [.invertDeltaX, .swap, .maxX]),
-      Edge(.right, .right):(.bottom, .left, [.invertDeltaY, .maxX]),
-      Edge(.right, .down):(.front, .left, [.swap]),
-      Edge(.right, .left):(.top, .left, [.maxX]),
-      Edge(.front, .up):(.top, .up, [.maxY]),
-      Edge(.front, .right):(.right, .up, [.swap, .maxY]),
-      Edge(.front, .down):(.bottom, .down, [.minY]),
-      Edge(.front, .left):(.left, .up, [.invertDeltaY, .swap, .maxY]),
-      Edge(.bottom, .up):(.front, .up, [.maxY]),
-      Edge(.bottom, .right):(.right, .left, [.invertDeltaY, .maxX]),
-      Edge(.bottom, .down):(.back, .down, [.minY]),
-      Edge(.bottom, .left):(.left, .right, [.invertDeltaY, .minX]),
-    ]
+    public static func crossEdgeMap(_ edge: Edge) -> (Face, Direction, [EdgeTransformation]) {
+        switch (edge.face, edge.direction) {
+            case (.back, .up): return (.bottom, .up, [.maxY])
+            case (.back, .right): return (.right, .down, [.invertDeltaY, .swap, .minY])
+            case (.back, .down): return (.top, .down, [.minY])
+            case (.back, .left): return (.left, .down, [.swap, .minY])
+            case (.left, .up): return (.back, .right, [.swap])
+            case (.left, .right): return (.top, .right, [.minX])
+            case (.left, .down): return (.front, .right, [.invertDeltaX, .swap, .minX])
+            case (.left, .left): return (.bottom, .right, [.invertDeltaY, .minX])
+            case (.top, .up): return (.back, .up, [.maxY])
+            case (.top, .right): return (.right, .right, [.minX])
+            case (.top, .down): return (.front, .down, [.minY])
+            case (.top, .left): return (.left, .left, [.maxX])
+            case (.right, .up): return (.back, .left, [.invertDeltaX, .swap, .maxX])
+            case (.right, .right): return (.bottom, .left, [.invertDeltaY, .maxX])
+            case (.right, .down): return (.front, .left, [.swap])
+            case (.right, .left): return (.top, .left, [.maxX])
+            case (.front, .up): return (.top, .up, [.maxY])
+            case (.front, .right): return (.right, .up, [.swap, .maxY])
+            case (.front, .down): return (.bottom, .down, [.minY])
+            case (.front, .left): return (.left, .up, [.invertDeltaY, .swap, .maxY])
+            case (.bottom, .up): return (.front, .up, [.maxY])
+            case (.bottom, .right): return (.right, .left, [.invertDeltaY, .maxX])
+            case (.bottom, .down): return (.back, .down, [.minY])
+            case (.bottom, .left): return (.left, .right, [.invertDeltaY, .minX])
+        }
+    }
 
     public func adjacentState(from origin: SlideState) -> SlideState {
         func handleEdge() -> SlideState {
-            guard let (destinationFace,
-                       destinationDirection,
-                       transformations) = Level.crossEdgeMap[Edge(origin.point.face, origin.direction)] else {
-                fatalError("Unexpected edge transformation.")
-            }
+            let (destinationFace,
+                 destinationDirection,
+                 transformations) = Level.crossEdgeMap(Edge(origin.point.face, origin.direction))
             let newPoint = transformations.reduce(origin.point,
                                                   { return $1.transform(levelSize: levelSize, newFace: destinationFace, point: $0) })
             return SlideState(point: newPoint, direction: destinationDirection)
