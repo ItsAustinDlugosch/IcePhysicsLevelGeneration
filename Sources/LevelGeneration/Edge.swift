@@ -2,7 +2,7 @@ public struct Edge: Equatable, Hashable {
     public let face: Face
     public let direction: Direction
 
-    init(_ face: Face, _ direction: Direction) {
+    public init(_ face: Face, _ direction: Direction) {
         self.face = face
         self.direction = direction
     }
