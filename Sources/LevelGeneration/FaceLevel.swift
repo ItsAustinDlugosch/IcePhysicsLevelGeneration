@@ -131,20 +131,22 @@ public struct FaceLevel { // Represents one side of a level within our game
         return [LevelPoint](Direction.allCases.map { borderPointsByDirection($0) }.joined())
     }
 
-    public func borderPointsByDirection(_ direction: Direction) -> [LevelPoint] {
+    public func borderPointsByDirection(_ direction: Direction, reversed: Bool = false) -> [LevelPoint] {
         guard faceSize.maxX > 0 && faceSize.maxY > 0 else {
             fatalError("Cannot access borderPoints from empty FaceLevel.")
         }
+        var borderPoints = [LevelPoint]()
         switch direction {
         case .up:
-            return tiles.map { $0.first!.point }
+            borderPoints = tiles.map { $0.first!.point }
         case .down:
-            return tiles.map { $0.last!.point }
+            borderPoints = tiles.map { $0.last!.point }
         case .left:
-            return tiles.first!.map { $0.point }
+            borderPoints = tiles.first!.map { $0.point }
         case .right:
-            return tiles.last!.map { $0.point }
+            borderPoints = tiles.last!.map { $0.point }
         }
+        return reversed ? borderPoints.reversed() : borderPoints
     }
 
     // Prints the grid
