@@ -30,4 +30,13 @@ public enum Direction: String, CaseIterable, Hashable, Codable {
         }
         return count
     }
+
+    public func rotatedClockwise(times count: Int) -> Direction {
+        let rotations = count % 4
+        var rotated = self
+        for _ in 0 ..< rotations {
+            rotated = Direction.clockwiseDirectionPointers[rotated]!
+        }
+        return rotated
+    }
 }
