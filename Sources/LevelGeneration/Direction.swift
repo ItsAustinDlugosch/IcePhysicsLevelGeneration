@@ -13,4 +13,21 @@ public enum Direction: String, CaseIterable, Hashable, Codable {
             return .left
         }
     }
+
+    static let clockwiseDirectionPointers: [Direction: Direction] = [
+      .up: .right,
+      .right: .down,
+      .down: .left,
+      .left: .up
+    ]
+
+    public func clockwiseDistance(from direction: Direction) -> Int {
+        var count = 0
+        var iterating = direction
+        while iterating != self {
+            iterating = Direction.clockwiseDirectionPointers[iterating]! // Can safely unwrap because dictionary contains all Directions
+            count += 1
+        }
+        return count
+    }
 }
