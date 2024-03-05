@@ -2,8 +2,11 @@ public struct Slide { // Represents a "slide" that connects two critical points
     public let origin:  SlideState // Where the slide begins
     public let destination: SlideState
     public let intermediates: [SlideState]
-    
 
+    public var full: [SlideState] {
+        return [origin] + intermediates + [destination]
+    }
+    
     public init(origin: SlideState,
                 destination: SlideState,
                 intermediates: [SlideState]) {
