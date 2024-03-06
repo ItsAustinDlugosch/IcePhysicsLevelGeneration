@@ -308,6 +308,8 @@ public struct Level {
     public mutating func resetLevel() {
         tilePointsOfStatus(tileStatus: .paintable).forEach { setTileStatus(levelPoint: $0, tileStatus: .nonPaintable) }
         tilePointsOfStatus(tileStatus: .critical).forEach { setTileStatus(levelPoint: $0, tileStatus: .nonPaintable) }
+        tilePointsOfStatus(tileStatus: .painted).forEach { setTileStatus(levelPoint: $0, tileStatus: .nonPaintable) }
+        tilePointsOfStatus(tileStatus: .unpainted).forEach { setTileStatus(levelPoint: $0, tileStatus: .nonPaintable) }
         levelGraph.clearGraph()
         setTileStatus(levelPoint: startingPosition, tileStatus: .critical)
         initializeCriticalTiles()
