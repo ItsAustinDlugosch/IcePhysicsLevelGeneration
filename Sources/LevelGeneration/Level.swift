@@ -441,14 +441,14 @@ extension Level {
         }    
     }
 
-    public func emptyLevel() -> Level {
+    public func playLevel() -> Level {
         let inactiveTilePoints = tilePointsOfStatus(tileStatus: .nonPaintable)
         let activeTilePoints = tilePointsOfStatus(tileStatus: .paintable)
         let criticalTilePoints = tilePointsOfStatus(tileStatus: .critical)
         var emptyLevel = self
         emptyLevel.setSpecialTileType(levelPoints: inactiveTilePoints, specialTileType: .wall)
-        emptyLevel.setTileStatus(levelPoints: activeTilePoints.union(criticalTilePoints), tileStatus: .nonPaintable)
-        emptyLevel.setTileStatus(levelPoint: emptyLevel.startingPosition, tileStatus: .critical)
+        emptyLevel.setTileStatus(levelPoints: activeTilePoints.union(criticalTilePoints), tileStatus: .unpainted)
+        emptyLevel.setTileStatus(levelPoint: emptyLevel.startingPosition, tileStatus: .painted)
         return emptyLevel
     }
 }
